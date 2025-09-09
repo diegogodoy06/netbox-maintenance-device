@@ -1,0 +1,19 @@
+# Example docker-compose.override.yml for installing plugins
+# Copy this file to your netbox-docker directory and customize as needed
+# Exemplo de docker-compose.override.yml para instalar plugins
+# Copie este arquivo para o diretório netbox-docker e personalize conforme necessário
+
+version: '3.4'
+services:
+  netbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.override
+  netbox-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.override
+  netbox-housekeeping:
+    build:
+      context: .
+      dockerfile: Dockerfile.override
