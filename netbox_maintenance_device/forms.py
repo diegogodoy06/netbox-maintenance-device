@@ -1,7 +1,10 @@
 from django import forms
-from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
+from netbox.forms import NetBoxModelForm
 from dcim.models import Device
 from utilities.forms.fields import DynamicModelChoiceField
+from utilities.forms import StaticSelect
+import django_filters
+from netbox.filtersets import NetBoxModelFilterSet
 from . import models
 
 
@@ -19,25 +22,18 @@ class MaintenancePlanForm(NetBoxModelForm):
         ]
 
 
-class MaintenancePlanFilterSet(NetBoxModelFilterSetForm):
-    model = models.MaintenancePlan
-    
-    device = DynamicModelChoiceField(
+class MaintenancePlanFilterSet(NetBoxModelFilterSet):
+    device = django_filters.ModelChoiceFilter(
         queryset=Device.objects.all(),
-        required=False
+        field_name='device'
     )
-    maintenance_type = forms.ChoiceField(
-        choices=[('', 'All')] + models.MaintenancePlan.MAINTENANCE_TYPE_CHOICES,
-        required=False
+    maintenance_type = django_filters.ChoiceFilter(
+        choices=models.MaintenancePlan.MAINTENANCE_TYPE_CHOICES
     )
-    is_active = forms.NullBooleanField(
-        required=False,
-        widget=forms.Select(choices=[
-            ('', 'All'),
-            ('true', 'Active'),
-            ('false', 'Inactive')
-        ])
-    )
+    
+    class Meta:
+        model = models.MaintenancePlan
+        fields = ['device', 'maintenance_type', 'is_active']
 
 
 class MaintenanceExecutionForm(NetBoxModelForm):
@@ -58,22 +54,15 @@ class MaintenanceExecutionForm(NetBoxModelForm):
         }
 
 
-class MaintenanceExecutionFilterSet(NetBoxModelFilterSetForm):
-    model = models.MaintenanceExecution
-    
-    maintenance_plan = DynamicModelChoiceField(
+class MaintenanceExecutionFilterSet(NetBoxModelFilterSet):
+    maintenance_plan = django_filters.ModelChoiceFilter(
         queryset=models.MaintenancePlan.objects.all(),
-        required=False
+        field_name='maintenance_plan'
     )
-    status = forms.ChoiceField(
-        choices=[('', 'All')] + models.MaintenanceExecution.STATUS_CHOICES,
-        required=False
+    status = django_filters.ChoiceFilter(
+        choices=models.MaintenanceExecution.STATUS_CHOICES
     )
-    completed = forms.NullBooleanField(
-        required=False,
-        widget=forms.Select(choices=[
-            ('', 'All'),
-            ('true', 'Completed'),
-            ('false', 'Not Completed')
-        ])
-    )
+    
+    class Meta:
+        model = models.MaintenanceExecution
+        fields = ['maintenance_plan', 'status', 'completed']
