@@ -1,5 +1,5 @@
 from netbox.api.viewsets import NetBoxModelViewSet
-from .. import models
+from netbox_maintenance_device import models
 from .serializers import MaintenancePlanSerializer, MaintenanceExecutionSerializer
 
 

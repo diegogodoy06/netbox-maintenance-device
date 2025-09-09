@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer
-from . import models
+from netbox_maintenance_device import models
 
 
 class MaintenancePlanSerializer(NetBoxModelSerializer):
