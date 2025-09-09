@@ -6,5 +6,10 @@ class MaintenanceDeviceConfig(PluginConfig):
     description = 'Manage device preventive and corrective maintenance'
     version = '1.0.0'
     base_url = 'maintenance-device'
+    
+    # Default configurations
+    default_settings = {
+        'default_frequency_days': 30,
+    }
 
 config = MaintenanceDeviceConfig
