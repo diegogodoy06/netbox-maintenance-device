@@ -1,0 +1,4 @@
+include README.md
+recursive-include netbox_maintenance_device/templates *
+recursive-include netbox_maintenance_device/static *
+global-exclude *.pyc
