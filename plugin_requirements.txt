@@ -3,4 +3,4 @@
 # Arquivo de requisitos de plugins do NetBox para instalação Docker
 # Coloque este arquivo na raiz do diretório netbox-docker
 
-netbox-maintenance-device
+https://github.com/diegogodoy06/netbox-maintenance-device/archive/main.tar.gz
