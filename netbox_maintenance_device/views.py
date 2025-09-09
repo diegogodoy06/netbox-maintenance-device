@@ -51,9 +51,9 @@ class UpcomingMaintenanceView(generic.ObjectListView):
     table = tables.UpcomingMaintenanceTable
     template_name = 'netbox_maintenance_device/upcoming_maintenance.html'
     
-    def get_queryset(self):
+    def get_queryset(self, request):
         # Get all active maintenance plans and calculate next dates
-        queryset = super().get_queryset()
+        queryset = super().get_queryset(request)
         
         # Filter for upcoming or overdue maintenance
         upcoming = []
