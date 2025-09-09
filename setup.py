@@ -12,8 +12,8 @@ setup(
     author='Diego Godoy',
     license='Apache 2.0',
     install_requires=[
-        'django-tables2',
-        'django-filters',
+        # NetBox já inclui django-filter e django-tables2
+        # Adicione apenas dependências específicas do seu plugin se necessário
     ],
     packages=find_packages(),
     include_package_data=True,
