@@ -1,0 +1,24 @@
+{% extends 'generic/object_list.html' %}
+{% load render_table from django_tables2 %}
+
+{% block title %}Upcoming & Overdue Maintenance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col col-md-12">
+        <div class="card">
+            <h5 class="card-header">
+                Upcoming & Overdue Maintenance
+                <span class="badge badge-secondary float-right">{{ table.data|length }}</span>
+            </h5>
+            <div class="card-body">
+                {% if table.data %}
+                    {% render_table table 'inc/table.html' %}
+                {% else %}
+                    <div class="text-muted">No upcoming or overdue maintenance found.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
