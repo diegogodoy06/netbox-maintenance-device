@@ -2,7 +2,6 @@ from django import forms
 from netbox.forms import NetBoxModelForm
 from dcim.models import Device
 from utilities.forms.fields import DynamicModelChoiceField
-from utilities.forms import StaticSelect
 import django_filters
 from netbox.filtersets import NetBoxModelFilterSet
 from . import models
