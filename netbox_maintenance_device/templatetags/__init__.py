@@ -1,1 +1,0 @@
-# Template tags for NetBox maintenance device plugin
