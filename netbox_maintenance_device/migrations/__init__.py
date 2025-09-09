@@ -1,0 +1,1 @@
+# Migrations for netbox_maintenance_device plugin

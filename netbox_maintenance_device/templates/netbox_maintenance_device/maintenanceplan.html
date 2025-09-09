@@ -1,0 +1,94 @@
+{% extends 'generic/object.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">Maintenance Plan Details</h5>
+            <table class="table table-hover attr-table">
+                <tr>
+                    <td>Device</td>
+                    <td><a href="{{ object.device.get_absolute_url }}">{{ object.device }}</a></td>
+                </tr>
+                <tr>
+                    <td>Name</td>
+                    <td>{{ object.name }}</td>
+                </tr>
+                <tr>
+                    <td>Description</td>
+                    <td>{{ object.description|default:"—" }}</td>
+                </tr>
+                <tr>
+                    <td>Maintenance Type</td>
+                    <td>{{ object.get_maintenance_type_display }}</td>
+                </tr>
+                <tr>
+                    <td>Frequency</td>
+                    <td>{{ object.frequency_days }} days</td>
+                </tr>
+                <tr>
+                    <td>Active</td>
+                    <td>{% if object.is_active %}Yes{% else %}No{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Next Due</td>
+                    <td>
+                        {% with next_date=object.get_next_maintenance_date %}
+                            {% if next_date %}
+                                {{ next_date|date:"Y-m-d" }}
+                                {% if object.is_overdue %}
+                                    <span class="badge badge-danger">Overdue</span>
+                                {% elif object.days_until_due <= 7 %}
+                                    <span class="badge badge-warning">Due Soon</span>
+                                {% endif %}
+                            {% else %}
+                                No executions yet
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">Recent Executions</h5>
+            <div class="card-body">
+                {% if object.executions.all %}
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Scheduled</th>
+                                <th>Status</th>
+                                <th>Technician</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for execution in object.executions.all|slice:":5" %}
+                            <tr>
+                                <td><a href="{{ execution.get_absolute_url }}">{{ execution.scheduled_date|date:"Y-m-d H:i" }}</a></td>
+                                <td>
+                                    <span class="badge {% if execution.status == 'completed' %}badge-success{% elif execution.status == 'in_progress' %}badge-warning{% elif execution.status == 'cancelled' %}badge-danger{% else %}badge-info{% endif %}">
+                                        {{ execution.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ execution.technician|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if object.executions.count > 5 %}
+                        <p class="text-muted">
+                            <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_list' %}?maintenance_plan={{ object.pk }}">
+                                View all {{ object.executions.count }} executions →
+                            </a>
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">No executions recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

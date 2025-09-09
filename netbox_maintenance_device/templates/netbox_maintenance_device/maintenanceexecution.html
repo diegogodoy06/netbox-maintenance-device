@@ -1,0 +1,57 @@
+{% extends 'generic/object.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">Execution Details</h5>
+            <table class="table table-hover attr-table">
+                <tr>
+                    <td>Maintenance Plan</td>
+                    <td><a href="{{ object.maintenance_plan.get_absolute_url }}">{{ object.maintenance_plan }}</a></td>
+                </tr>
+                <tr>
+                    <td>Device</td>
+                    <td><a href="{{ object.maintenance_plan.device.get_absolute_url }}">{{ object.maintenance_plan.device }}</a></td>
+                </tr>
+                <tr>
+                    <td>Scheduled Date</td>
+                    <td>{{ object.scheduled_date|date:"Y-m-d H:i" }}</td>
+                </tr>
+                <tr>
+                    <td>Completed Date</td>
+                    <td>{{ object.completed_date|date:"Y-m-d H:i"|default:"—" }}</td>
+                </tr>
+                <tr>
+                    <td>Status</td>
+                    <td>
+                        <span class="badge {% if object.status == 'completed' %}badge-success{% elif object.status == 'in_progress' %}badge-warning{% elif object.status == 'cancelled' %}badge-danger{% else %}badge-info{% endif %}">
+                            {{ object.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Technician</td>
+                    <td>{{ object.technician|default:"—" }}</td>
+                </tr>
+                <tr>
+                    <td>Completed</td>
+                    <td>{% if object.completed %}Yes{% else %}No{% endif %}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">Notes</h5>
+            <div class="card-body">
+                {% if object.notes %}
+                    <div class="markdown">{{ object.notes|linebreaksbr }}</div>
+                {% else %}
+                    <p class="text-muted">No notes recorded.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
