@@ -10,8 +10,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('dcim', '0187_rack_starting_unit'),
-        ('extras', '0118_customfield_ui_edit_form'),
+        ('dcim', '__latest__'),
+        ('extras', '__latest__'),
     ]
 
     operations = [
