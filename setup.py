@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name='netbox-maintenance-device',
+    name='netbox_maintenance_device',
     version='1.0.0',
     description='NetBox plugin for device maintenance management',
     long_description=long_description,
