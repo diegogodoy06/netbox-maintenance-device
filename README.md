@@ -13,6 +13,8 @@ A NetBox plugin for managing device preventive and corrective maintenance.
 
 ## Installation
 
+### Standard Installation
+
 1. Install the plugin:
 ```bash
 pip install netbox-maintenance-device
@@ -31,6 +33,62 @@ python manage.py migrate
 ```
 
 4. Restart NetBox services.
+
+### Docker Installation (netbox-docker)
+
+For Docker-based NetBox installations using [netbox-docker](https://github.com/netbox-community/netbox-docker):
+
+> **📋 For detailed Docker installation instructions in English and Portuguese, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md)**
+
+#### Quick Start
+
+1. Add the plugin to `plugin_requirements.txt` in your netbox-docker directory:
+```bash
+echo "netbox-maintenance-device" >> plugin_requirements.txt
+```
+
+2. Configure the plugin in `configuration/plugins.py`:
+```python
+PLUGINS = [
+    'netbox_maintenance_device',
+]
+```
+
+3. Rebuild and restart:
+```bash
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+docker compose exec netbox python manage.py migrate
+```
+
+### Instalação Docker (netbox-docker) - Guia Rápido
+
+Para instalações do NetBox baseadas em Docker usando [netbox-docker](https://github.com/netbox-community/netbox-docker):
+
+> **📋 Para instruções detalhadas de instalação Docker em português e inglês, veja [DOCKER_INSTALL.md](DOCKER_INSTALL.md)**
+
+#### Início Rápido
+
+1. Adicione o plugin ao `plugin_requirements.txt` no diretório netbox-docker:
+```bash
+echo "netbox-maintenance-device" >> plugin_requirements.txt
+```
+
+2. Configure o plugin em `configuration/plugins.py`:
+```python
+PLUGINS = [
+    'netbox_maintenance_device',
+]
+```
+
+3. Reconstrua e reinicie:
+```bash
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+docker compose exec netbox python manage.py migrate
+```
 
 ## Usage
 
