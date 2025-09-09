@@ -1,8 +1,10 @@
-from netbox.plugins.utils import TemplateExtension
+from netbox.plugins import PluginTemplateExtension
 from dcim.models import Device
 
-class DeviceMaintenanceTab(TemplateExtension):
-    model = 'dcim.device'
+class DeviceMaintenanceTab(PluginTemplateExtension):
+    models = ['dcim.device']
     
     def left_page(self):
         return self.render('netbox_maintenance_device/device_maintenance_tab.html')
+
+template_extensions = [DeviceMaintenanceTab]
