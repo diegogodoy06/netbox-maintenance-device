@@ -1,7 +1,35 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# FIRST AUTHmsgid "Processing..."
+msgstr "Processando..."
+
+msgid "Error completing maintenance. Please try again."
+msgstr "Erro ao concluir manutenção. Tente novamente."
+
+msgid "Upcoming Maintenance"
+msgstr "Manutenção Próxima"
+
+msgid "Add"
+msgstr "Adicionar"
+
+msgid "Maintenance Executions"
+msgstr "Execuções de Manutenção"
+
+msgid "Active Plans"
+msgstr "Planos Ativos"
+
+msgid "Recent Activity"
+msgstr "Atividade Recente"
+
+msgid "No executions yet"
+msgstr "Nenhuma execução ainda"
+
+msgid "View All Maintenance"
+msgstr "Ver Toda Manutenção"
+
+msgid "No maintenance plans configured"
+msgstr "Nenhum plano de manutenção configurado"ESS>, YEAR.
 #
 #, fuzzy
 msgid ""
