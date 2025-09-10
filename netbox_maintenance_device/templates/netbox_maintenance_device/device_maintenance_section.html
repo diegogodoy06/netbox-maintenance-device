@@ -19,14 +19,35 @@
                         {% for plan in maintenance_plans %}
                             {% if plan.is_active %}
                                 <li class="mb-1">
-                                    <a href="{{ plan.get_absolute_url }}" class="text-decoration-none">
-                                        {{ plan.name }}
-                                    </a>
-                                    {% if plan.is_overdue %}
-                                        <span class="badge badge-danger badge-sm ml-1">{% trans "Overdue" %}</span>
-                                    {% elif plan.days_until_due and plan.days_until_due <= 7 %}
-                                        <span class="badge badge-warning badge-sm ml-1">{% trans "Due Soon" %}</span>
-                                    {% endif %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <a href="{{ plan.get_absolute_url }}" class="text-decoration-none">
+                                                {{ plan.name }}
+                                            </a>
+                                            {% if plan.is_overdue %}
+                                                <span class="badge badge-danger badge-sm ml-1">{% trans "Overdue" %}</span>
+                                            {% elif plan.days_until_due and plan.days_until_due <= 7 %}
+                                                <span class="badge badge-warning badge-sm ml-1">{% trans "Due Soon" %}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-primary btn-sm schedule-btn" 
+                                                    data-plan-id="{{ plan.pk }}" 
+                                                    data-plan-name="{{ plan.name }}"
+                                                    title="{% trans 'Schedule Maintenance' %}">
+                                                <i class="mdi mdi-calendar-plus"></i>
+                                            </button>
+                                            {% if plan.is_overdue or plan.days_until_due and plan.days_until_due <= 7 %}
+                                                <button type="button" class="btn btn-outline-success btn-sm complete-btn" 
+                                                        data-plan-id="{{ plan.pk }}" 
+                                                        data-device-id="{{ device.pk }}" 
+                                                        data-plan-name="{{ plan.name }}"
+                                                        title="{% trans 'Complete Now' %}">
+                                                    <i class="mdi mdi-check-circle"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </li>
                             {% endif %}
                         {% endfor %}
@@ -70,3 +91,176 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Schedule Maintenance Modal -->
+<div class="modal fade" id="scheduleMaintenanceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Schedule Maintenance" %}</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleMaintenanceForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="schedulePlanId" name="plan_id">
+                    <div class="form-group">
+                        <label for="scheduledDate">{% trans "Scheduled Date" %}</label>
+                        <input type="date" class="form-control" id="scheduledDate" name="scheduled_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleTechnician">{% trans "Technician" %}</label>
+                        <input type="text" class="form-control" id="scheduleTechnician" name="technician" 
+                               value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}">
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleNotes">{% trans "Notes" %}</label>
+                        <textarea class="form-control" id="scheduleNotes" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" id="confirmSchedule">
+                    <i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Complete Maintenance Modal -->
+<div class="modal fade" id="completeMaintenanceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Complete Maintenance" %}</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="completeMaintenanceForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="completePlanId" name="plan_id">
+                    <input type="hidden" id="completeDeviceId" name="device_id">
+                    <div class="form-group">
+                        <label for="completeTechnician">{% trans "Technician" %}</label>
+                        <input type="text" class="form-control" id="completeTechnician" name="technician" 
+                               value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="completeNotes">{% trans "Notes" %}</label>
+                        <textarea class="form-control" id="completeNotes" name="notes" rows="3" placeholder="{% trans 'Maintenance completed successfully' %}"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-success" id="confirmComplete">
+                    <i class="mdi mdi-check-circle"></i> {% trans "Complete Maintenance" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Handle schedule maintenance button
+    $(document).on('click', '.schedule-btn', function() {
+        var planId = $(this).data('plan-id');
+        var planName = $(this).data('plan-name');
+        
+        $('#schedulePlanId').val(planId);
+        $('.modal-title').text('{% trans "Schedule Maintenance" %}: ' + planName);
+        
+        // Set default date to tomorrow
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        $('#scheduledDate').val(tomorrow.toISOString().split('T')[0]);
+        
+        $('#scheduleMaintenanceModal').modal('show');
+    });
+    
+    // Handle complete maintenance button
+    $(document).on('click', '.complete-btn', function() {
+        var planId = $(this).data('plan-id');
+        var deviceId = $(this).data('device-id');
+        var planName = $(this).data('plan-name');
+        
+        $('#completePlanId').val(planId);
+        $('#completeDeviceId').val(deviceId);
+        $('.modal-title').text('{% trans "Complete Maintenance" %}: ' + planName);
+        
+        $('#completeMaintenanceModal').modal('show');
+    });
+    
+    // Handle schedule form submission
+    $('#confirmSchedule').click(function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> {% trans "Scheduling..." %}');
+        
+        var formData = $('#scheduleMaintenanceForm').serialize();
+        
+        $.ajax({
+            url: '{% url "plugins:netbox_maintenance_device:schedule_maintenance" %}',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#scheduleMaintenanceModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('{% trans "Error scheduling maintenance" %}: ' + response.error);
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
+                }
+            },
+            error: function() {
+                alert('{% trans "Error scheduling maintenance. Please try again." %}');
+                $btn.prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
+            }
+        });
+    });
+    
+    // Handle complete form submission
+    $('#confirmComplete').click(function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> {% trans "Completing..." %}');
+        
+        var formData = $('#completeMaintenanceForm').serialize();
+        
+        $.ajax({
+            url: '{% url "plugins:netbox_maintenance_device:quick_complete" %}',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#completeMaintenanceModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('{% trans "Error completing maintenance" %}: ' + response.error);
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-check-circle"></i> {% trans "Complete Maintenance" %}');
+                }
+            },
+            error: function() {
+                alert('{% trans "Error completing maintenance. Please try again." %}');
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check-circle"></i> {% trans "Complete Maintenance" %}');
+            }
+        });
+    });
+    
+    // Reset forms when modals are hidden
+    $('#scheduleMaintenanceModal').on('hidden.bs.modal', function() {
+        $('#scheduleMaintenanceForm')[0].reset();
+        $('#confirmSchedule').prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
+    });
+    
+    $('#completeMaintenanceModal').on('hidden.bs.modal', function() {
+        $('#completeMaintenanceForm')[0].reset();
+        $('#confirmComplete').prop('disabled', false).html('<i class="mdi mdi-check-circle"></i> {% trans "Complete Maintenance" %}');
+    });
+});
+</script>

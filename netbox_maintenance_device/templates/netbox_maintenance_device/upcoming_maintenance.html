@@ -61,11 +61,12 @@
                     <input type="hidden" id="deviceId" name="device_id">
                     <div class="form-group">
                         <label for="technician">{% trans "Technician" %}</label>
-                        <input type="text" class="form-control" id="technician" name="technician" required>
+                        <input type="text" class="form-control" id="technician" name="technician" 
+                               value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}" required>
                     </div>
                     <div class="form-group">
                         <label for="notes">{% trans "Notes" %}</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="{% trans 'Maintenance completed successfully' %}"></textarea>
                     </div>
                 </form>
             </div>
@@ -73,6 +74,45 @@
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-success" id="confirmComplete">
                     <i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Maintenance Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Schedule Maintenance" %}</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="schedulePlanId" name="plan_id">
+                    <div class="form-group">
+                        <label for="scheduledDate">{% trans "Scheduled Date" %}</label>
+                        <input type="date" class="form-control" id="scheduledDate" name="scheduled_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleTechnician">{% trans "Technician" %}</label>
+                        <input type="text" class="form-control" id="scheduleTechnician" name="technician" 
+                               value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}">
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleNotes">{% trans "Notes" %}</label>
+                        <textarea class="form-control" id="scheduleNotes" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" id="confirmSchedule">
+                    <i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}
                 </button>
             </div>
         </div>
@@ -93,7 +133,23 @@ $(document).ready(function() {
         $('#quickCompleteModal').modal('show');
     });
     
-    // Handle form submission
+    // Handle schedule maintenance
+    $(document).on('click', '.schedule-btn', function() {
+        var planId = $(this).data('plan-id');
+        var planName = $(this).data('plan-name');
+        
+        $('#schedulePlanId').val(planId);
+        $('.modal-title').text('{% trans "Schedule Maintenance" %}: ' + planName);
+        
+        // Set default date to tomorrow
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        $('#scheduledDate').val(tomorrow.toISOString().split('T')[0]);
+        
+        $('#scheduleModal').modal('show');
+    });
+    
+    // Handle complete form submission
     $('#confirmComplete').click(function() {
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> {% trans "Processing..." %}');
@@ -120,10 +176,42 @@ $(document).ready(function() {
         });
     });
     
-    // Reset form when modal is hidden
+    // Handle schedule form submission
+    $('#confirmSchedule').click(function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> {% trans "Scheduling..." %}');
+        
+        var formData = $('#scheduleForm').serialize();
+        
+        $.ajax({
+            url: '{% url "plugins:netbox_maintenance_device:schedule_maintenance" %}',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#scheduleModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('{% trans "Error scheduling maintenance" %}: ' + response.error);
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
+                }
+            },
+            error: function() {
+                alert('{% trans "Error scheduling maintenance. Please try again." %}');
+                $btn.prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
+            }
+        });
+    });
+    
+    // Reset forms when modals are hidden
     $('#quickCompleteModal').on('hidden.bs.modal', function() {
         $('#quickCompleteForm')[0].reset();
         $('#confirmComplete').prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
+    });
+    
+    $('#scheduleModal').on('hidden.bs.modal', function() {
+        $('#scheduleForm')[0].reset();
+        $('#confirmSchedule').prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
     });
 });
 </script>

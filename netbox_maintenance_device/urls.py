@@ -28,4 +28,5 @@ urlpatterns = [
     
     # Quick Actions
     path('quick-complete/', views.quick_complete_maintenance, name='quick_complete'),
+    path('schedule/', views.schedule_maintenance, name='schedule_maintenance'),
 ]

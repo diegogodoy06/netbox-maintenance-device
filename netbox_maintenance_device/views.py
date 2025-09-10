@@ -138,6 +138,11 @@ def quick_complete_maintenance(request):
         elif plan_id and device_id:
             # Create and complete new execution for the plan
             plan = get_object_or_404(models.MaintenancePlan, pk=plan_id)
+            
+            # Use logged user as technician if not provided
+            if not technician and request.user.is_authenticated:
+                technician = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
+            
             execution = models.MaintenanceExecution.objects.create(
                 maintenance_plan=plan,
                 scheduled_date=timezone.now(),
@@ -157,6 +162,56 @@ def quick_complete_maintenance(request):
                 'error': _('Missing required parameters')
             })
             
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'error': str(e)
+        })
+
+
+@require_http_methods(["POST"])
+def schedule_maintenance(request):
+    """Schedule maintenance for a plan"""
+    try:
+        plan_id = request.POST.get('plan_id')
+        scheduled_date = request.POST.get('scheduled_date')
+        technician = request.POST.get('technician', '')
+        notes = request.POST.get('notes', '')
+        
+        if not plan_id:
+            return JsonResponse({
+                'success': False, 
+                'error': _('Missing maintenance plan ID')
+            })
+        
+        plan = get_object_or_404(models.MaintenancePlan, pk=plan_id)
+        
+        # Use logged user as technician if not provided
+        if not technician and request.user.is_authenticated:
+            technician = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
+        
+        # Use provided date or next maintenance date
+        if scheduled_date:
+            from datetime import datetime
+            scheduled_datetime = datetime.strptime(scheduled_date, '%Y-%m-%d')
+            scheduled_datetime = timezone.make_aware(scheduled_datetime)
+        else:
+            scheduled_datetime = plan.get_next_maintenance_date() or timezone.now()
+        
+        execution = models.MaintenanceExecution.objects.create(
+            maintenance_plan=plan,
+            scheduled_date=scheduled_datetime,
+            status='scheduled',
+            technician=technician,
+            notes=notes
+        )
+        
+        return JsonResponse({
+            'success': True, 
+            'message': _('Maintenance scheduled successfully'),
+            'execution_id': execution.pk
+        })
+        
     except Exception as e:
         return JsonResponse({
             'success': False, 
