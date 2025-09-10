@@ -420,3 +420,8 @@ def send_browser_notification(request):
             'success': False,
             'error': str(e)
         })
+
+
+def test_notifications(request):
+    """Test page for notifications"""
+    return render(request, 'netbox_maintenance_device/notification_test.html')

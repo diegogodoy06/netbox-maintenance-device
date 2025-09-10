@@ -1,0 +1,70 @@
+{% load i18n %}
+<!-- Simple Notification Test -->
+<div id="notification-test" style="position: fixed; top: 100px; right: 20px; background: #fff; border: 1px solid #ccc; padding: 15px; z-index: 9999; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h5>🔔 Teste de Notificações</h5>
+    <p>Usuário: <strong>{{ user.username }}</strong></p>
+    <p>Total de notificações: <span id="total-notifications">Carregando...</span></p>
+    <p>Não lidas: <span id="unread-notifications">Carregando...</span></p>
+    <button onclick="testNotifications()">Atualizar</button>
+    <button onclick="hideTest()">Fechar</button>
+    
+    <div id="notification-list" style="max-height: 200px; overflow-y: auto; margin-top: 10px;">
+        <!-- Notificações aparecerão aqui -->
+    </div>
+</div>
+
+<script>
+function testNotifications() {
+    console.log('Testing notifications...');
+    
+    // Test 1: Get unread notifications
+    fetch('{% url "plugins:netbox_maintenance_device:api_unread_notifications" %}')
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Unread notifications data:', data);
+            document.getElementById('unread-notifications').textContent = data.count || 0;
+            
+            const listElement = document.getElementById('notification-list');
+            if (data.notifications && data.notifications.length > 0) {
+                listElement.innerHTML = '<strong>Notificações não lidas:</strong><br>';
+                data.notifications.forEach(notif => {
+                    listElement.innerHTML += `
+                        <div style="border: 1px solid #eee; padding: 5px; margin: 5px 0; border-radius: 3px;">
+                            <strong>${notif.title}</strong><br>
+                            <small>${notif.message}</small><br>
+                            <em>Prioridade: ${notif.priority} | Tipo: ${notif.notification_type}</em>
+                        </div>
+                    `;
+                });
+            } else {
+                listElement.innerHTML = '<em>Nenhuma notificação não lida encontrada.</em>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching notifications:', error);
+            document.getElementById('unread-notifications').textContent = 'Erro!';
+            document.getElementById('notification-list').innerHTML = `<div style="color: red;">Erro: ${error.message}</div>`;
+        });
+    
+    // Test 2: Get total notifications count (we need to add this endpoint)
+    fetch('/admin/')  // Just to test if we're authenticated
+        .then(response => {
+            console.log('Auth test - status:', response.status);
+        })
+        .catch(error => {
+            console.error('Auth test error:', error);
+        });
+}
+
+function hideTest() {
+    document.getElementById('notification-test').style.display = 'none';
+}
+
+// Auto-run test when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(testNotifications, 1000);
+});
+</script>
