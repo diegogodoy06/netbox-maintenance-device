@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from datetime import timedelta
 from netbox.models import NetBoxModel
 from dcim.models import Device
+from django.contrib.auth.models import User
 
 class MaintenancePlan(NetBoxModel):
     """Maintenance plan for a device with frequency and type"""
@@ -70,6 +71,38 @@ class MaintenancePlan(NetBoxModel):
             delta = next_date.date() - timezone.now().date()
             return delta.days
         return None
+    
+    def create_notification(self, notification_type, priority='medium', title=None, message=None, users=None):
+        """Create notifications for this maintenance plan"""
+        from .models import MaintenanceNotification
+        
+        if not users:
+            # Get staff users as default
+            users = User.objects.filter(is_active=True, is_staff=True)
+        
+        notifications_created = []
+        
+        for user in users:
+            # Check if similar notification already exists (avoid duplicates)
+            existing = MaintenanceNotification.objects.filter(
+                user=user,
+                maintenance_plan=self,
+                notification_type=notification_type,
+                created_at__date=timezone.now().date()
+            ).exists()
+            
+            if not existing:
+                notification = MaintenanceNotification.objects.create(
+                    user=user,
+                    maintenance_plan=self,
+                    notification_type=notification_type,
+                    priority=priority,
+                    title=title or f'{notification_type.title()} Maintenance: {self.name}',
+                    message=message or f'Device {self.device.name} - {self.name}'
+                )
+                notifications_created.append(notification)
+        
+        return notifications_created
 
 
 class MaintenanceExecution(NetBoxModel):
@@ -115,3 +148,91 @@ class MaintenanceExecution(NetBoxModel):
         # Auto-set completed flag based on status
         self.completed = self.status == 'completed'
         super().save(*args, **kwargs)
+
+
+class MaintenanceNotification(NetBoxModel):
+    """Notification for maintenance events"""
+    
+    NOTIFICATION_TYPE_CHOICES = [
+        ('overdue', _('Overdue')),
+        ('due_soon', _('Due Soon')),
+        ('scheduled', _('Scheduled')),
+        ('completed', _('Completed')),
+        ('cancelled', _('Cancelled')),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('low', _('Low')),
+        ('medium', _('Medium')),
+        ('high', _('High')),
+        ('critical', _('Critical')),
+    ]
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='maintenance_notifications',
+        verbose_name=_('User')
+    )
+    maintenance_plan = models.ForeignKey(
+        MaintenancePlan,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+        verbose_name=_('Maintenance Plan')
+    )
+    notification_type = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_TYPE_CHOICES,
+        verbose_name=_('Type')
+    )
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_CHOICES,
+        default='medium',
+        verbose_name=_('Priority')
+    )
+    title = models.CharField(max_length=200, verbose_name=_('Title'))
+    message = models.TextField(verbose_name=_('Message'))
+    is_read = models.BooleanField(default=False, verbose_name=_('Read'))
+    is_sent_browser = models.BooleanField(default=False, verbose_name=_('Sent to Browser'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
+    read_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Read At'))
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _('Maintenance Notification')
+        verbose_name_plural = _('Maintenance Notifications')
+    
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"
+    
+    def get_absolute_url(self):
+        return reverse('plugins:netbox_maintenance_device:notification', args=[self.pk])
+    
+    def mark_as_read(self):
+        """Mark notification as read"""
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save()
+    
+    def get_priority_class(self):
+        """Get CSS class for priority"""
+        priority_classes = {
+            'low': 'info',
+            'medium': 'warning',
+            'high': 'danger',
+            'critical': 'danger'
+        }
+        return priority_classes.get(self.priority, 'info')
+    
+    def get_type_icon(self):
+        """Get icon for notification type"""
+        type_icons = {
+            'overdue': 'mdi-alert-circle',
+            'due_soon': 'mdi-clock-alert',
+            'scheduled': 'mdi-calendar-check',
+            'completed': 'mdi-check-circle',
+            'cancelled': 'mdi-cancel'
+        }
+        return type_icons.get(self.notification_type, 'mdi-bell')

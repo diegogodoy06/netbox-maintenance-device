@@ -1,0 +1,267 @@
+{% load i18n %}
+<!-- Maintenance Notifications Indicator -->
+<div class="dropdown" id="maintenance-notifications-dropdown">
+    <button class="btn btn-outline-secondary dropdown-toggle position-relative" 
+            type="button" 
+            id="maintenanceNotificationsBtn" 
+            data-bs-toggle="dropdown" 
+            aria-expanded="false"
+            title="{% trans 'Maintenance Notifications' %}">
+        <i class="mdi mdi-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+              id="notification-count" 
+              style="display: none;">0</span>
+    </button>
+    
+    <div class="dropdown-menu dropdown-menu-end" 
+         style="width: 350px; max-height: 400px; overflow-y: auto;" 
+         aria-labelledby="maintenanceNotificationsBtn">
+        
+        <div class="dropdown-header d-flex justify-content-between align-items-center">
+            <span>{% trans 'Maintenance Notifications' %}</span>
+            <a href="{% url 'plugins:netbox_maintenance_device:notifications' %}" 
+               class="btn btn-sm btn-outline-primary">
+                {% trans 'View All' %}
+            </a>
+        </div>
+        
+        <div class="dropdown-divider"></div>
+        
+        <div id="notifications-list">
+            <div class="text-center p-3 text-muted">
+                <i class="mdi mdi-loading mdi-spin"></i>
+                {% trans 'Loading notifications...' %}
+            </div>
+        </div>
+        
+        <div class="dropdown-divider"></div>
+        
+        <div class="dropdown-item-text text-center">
+            <button class="btn btn-sm btn-outline-secondary" onclick="markAllNotificationsRead()">
+                {% trans 'Mark All as Read' %}
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let notificationUpdateInterval;
+let lastNotificationCheck = 0;
+
+// Initialize notifications when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Request notification permission if not already granted
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    
+    // Load initial notifications
+    updateNotifications();
+    
+    // Set up periodic updates
+    notificationUpdateInterval = setInterval(updateNotifications, 30000); // Every 30 seconds
+});
+
+function updateNotifications() {
+    fetch('{% url "plugins:netbox_maintenance_device:api_unread_notifications" %}')
+        .then(response => response.json())
+        .then(data => {
+            const countBadge = document.getElementById('notification-count');
+            const notificationsList = document.getElementById('notifications-list');
+            
+            if (data.count > 0) {
+                countBadge.textContent = data.count;
+                countBadge.style.display = 'inline';
+                
+                // Check for new notifications to show browser alerts
+                if (data.count > lastNotificationCheck && lastNotificationCheck > 0) {
+                    showBrowserNotificationsForNew(data.notifications);
+                }
+                lastNotificationCheck = data.count;
+                
+                // Update notifications list
+                notificationsList.innerHTML = '';
+                data.notifications.slice(0, 5).forEach(notification => {
+                    const notificationElement = createNotificationElement(notification);
+                    notificationsList.appendChild(notificationElement);
+                });
+                
+                if (data.count > 5) {
+                    const moreElement = document.createElement('div');
+                    moreElement.className = 'dropdown-item-text text-center text-muted';
+                    moreElement.innerHTML = `{% trans 'and' %} ${data.count - 5} {% trans 'more...' %}`;
+                    notificationsList.appendChild(moreElement);
+                }
+            } else {
+                countBadge.style.display = 'none';
+                notificationsList.innerHTML = `
+                    <div class="text-center p-3 text-muted">
+                        <i class="mdi mdi-check-circle"></i><br>
+                        {% trans 'No new notifications' %}
+                    </div>
+                `;
+                lastNotificationCheck = 0;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching notifications:', error);
+            document.getElementById('notifications-list').innerHTML = `
+                <div class="text-center p-3 text-danger">
+                    <i class="mdi mdi-alert"></i><br>
+                    {% trans 'Error loading notifications' %}
+                </div>
+            `;
+        });
+}
+
+function createNotificationElement(notification) {
+    const element = document.createElement('div');
+    element.className = 'dropdown-item-text border-bottom py-2';
+    element.style.cursor = 'pointer';
+    
+    const priorityClass = notification.priority === 'critical' ? 'danger' : 
+                         notification.priority === 'high' ? 'warning' : 'info';
+    
+    const timeAgo = formatTimeAgo(notification.created_at);
+    
+    element.innerHTML = `
+        <div class="d-flex align-items-start">
+            <i class="${notification.type_icon} text-${priorityClass} me-2 mt-1"></i>
+            <div class="flex-grow-1" style="min-width: 0;">
+                <div class="fw-bold text-truncate" style="font-size: 0.9rem;">
+                    ${notification.title}
+                </div>
+                <div class="text-muted small text-truncate">
+                    ${notification.message}
+                </div>
+                <div class="text-muted" style="font-size: 0.75rem;">
+                    ${timeAgo}
+                </div>
+            </div>
+            <span class="badge bg-${priorityClass} ms-2" style="font-size: 0.6rem;">
+                ${notification.priority}
+            </span>
+        </div>
+    `;
+    
+    element.addEventListener('click', function() {
+        markNotificationRead(notification.id);
+        window.location.href = notification.maintenance_plan_url;
+    });
+    
+    return element;
+}
+
+function showBrowserNotificationsForNew(notifications) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        notifications.forEach(notification => {
+            if (!notification.is_sent_browser) {
+                new Notification(notification.title, {
+                    body: notification.message,
+                    icon: '/static/netbox_maintenance_device/img/maintenance-icon.png', // You can add an icon
+                    tag: `maintenance-${notification.id}`,
+                    requireInteraction: notification.priority === 'critical'
+                });
+                
+                // Mark as sent to browser
+                fetch('{% url "plugins:netbox_maintenance_device:api_send_browser_notification" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({notification_id: notification.id})
+                });
+            }
+        });
+    }
+}
+
+function markNotificationRead(notificationId) {
+    fetch('{% url "plugins:netbox_maintenance_device:api_mark_notification_read" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({notification_id: notificationId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateNotifications(); // Refresh the list
+        }
+    })
+    .catch(error => console.error('Error marking notification as read:', error));
+}
+
+function markAllNotificationsRead() {
+    fetch('{% url "plugins:netbox_maintenance_device:api_mark_all_notifications_read" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateNotifications(); // Refresh the list
+        }
+    })
+    .catch(error => console.error('Error marking all notifications as read:', error));
+}
+
+function formatTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) {
+        return '{% trans "just now" %}';
+    } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} {% trans "min ago" %}`;
+    } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `${hours} {% trans "h ago" %}`;
+    } else {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} {% trans "d ago" %}`;
+    }
+}
+
+// Clean up interval when page unloads
+window.addEventListener('beforeunload', function() {
+    if (notificationUpdateInterval) {
+        clearInterval(notificationUpdateInterval);
+    }
+});
+</script>
+
+<style>
+#maintenance-notifications-dropdown .dropdown-menu {
+    border: 1px solid #dee2e6;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+#maintenance-notifications-dropdown .dropdown-item-text:hover {
+    background-color: #f8f9fa;
+}
+
+#notification-count {
+    font-size: 0.7rem;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    line-height: 1.2rem;
+}
+
+.mdi-spin {
+    animation: mdi-spin 1s infinite linear;
+}
+
+@keyframes mdi-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>

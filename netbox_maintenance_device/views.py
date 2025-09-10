@@ -152,6 +152,16 @@ def quick_complete_maintenance(request):
                 notes=notes
             )
             
+            # Create completion notification
+            plan.create_notification(
+                notification_type='completed',
+                priority='low',
+                title=_('Maintenance Completed: {}').format(plan.name),
+                message=_('Device {} maintenance "{}" has been completed by {}').format(
+                    plan.device.name, plan.name, technician or 'Unknown'
+                )
+            )
+            
             return JsonResponse({
                 'success': True, 
                 'message': _('Maintenance scheduled and completed successfully')
@@ -206,6 +216,19 @@ def schedule_maintenance(request):
             notes=notes
         )
         
+        # Create scheduling notification
+        plan.create_notification(
+            notification_type='scheduled',
+            priority='medium',
+            title=_('Maintenance Scheduled: {}').format(plan.name),
+            message=_('Device {} maintenance "{}" has been scheduled for {} by {}').format(
+                plan.device.name, 
+                plan.name, 
+                scheduled_datetime.strftime('%Y-%m-%d %H:%M'),
+                technician or 'Unknown'
+            )
+        )
+        
         return JsonResponse({
             'success': True, 
             'message': _('Maintenance scheduled successfully'),
@@ -215,5 +238,184 @@ def schedule_maintenance(request):
     except Exception as e:
         return JsonResponse({
             'success': False, 
+            'error': str(e)
+        })
+
+
+# Notification Views
+class MaintenanceNotificationListView(generic.ObjectListView):
+    """View for user notifications"""
+    queryset = models.MaintenanceNotification.objects.all()
+    template_name = 'netbox_maintenance_device/notifications.html'
+    
+    def get_queryset(self, request):
+        # Only show notifications for the current user
+        if request.user.is_authenticated:
+            return models.MaintenanceNotification.objects.filter(user=request.user)
+        return models.MaintenanceNotification.objects.none()
+    
+    def get_extra_context(self, request):
+        context = super().get_extra_context(request)
+        
+        if request.user.is_authenticated:
+            # Count unread notifications
+            unread_count = models.MaintenanceNotification.objects.filter(
+                user=request.user, 
+                is_read=False
+            ).count()
+            
+            context['unread_count'] = unread_count
+        
+        return context
+
+
+@require_http_methods(["POST"])
+def mark_notification_read(request, notification_id):
+    """Mark a notification as read"""
+    try:
+        notification = get_object_or_404(
+            models.MaintenanceNotification, 
+            pk=notification_id, 
+            user=request.user
+        )
+        notification.mark_as_read()
+        
+        return JsonResponse({
+            'success': True,
+            'message': _('Notification marked as read')
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@require_http_methods(["POST"])
+def mark_all_notifications_read(request):
+    """Mark all notifications as read for the current user"""
+    try:
+        updated_count = models.MaintenanceNotification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).update(is_read=True, read_at=timezone.now())
+        
+        return JsonResponse({
+            'success': True,
+            'message': _('All notifications marked as read'),
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@require_http_methods(["GET"])
+def get_unread_notifications(request):
+    """Get unread notifications for the current user (AJAX)"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': 'User not authenticated'
+            })
+        
+        notifications = models.MaintenanceNotification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).order_by('-created_at')[:10]
+        
+        notifications_data = []
+        for notification in notifications:
+            notifications_data.append({
+                'id': notification.pk,
+                'title': notification.title,
+                'message': notification.message,
+                'type': notification.notification_type,
+                'priority': notification.priority,
+                'priority_class': notification.get_priority_class(),
+                'type_icon': notification.get_type_icon(),
+                'created_at': notification.created_at.isoformat(),
+                'device_name': notification.maintenance_plan.device.name,
+                'plan_name': notification.maintenance_plan.name,
+                'device_url': notification.maintenance_plan.device.get_absolute_url(),
+                'plan_url': notification.maintenance_plan.get_absolute_url(),
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'notifications': notifications_data,
+            'unread_count': len(notifications_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@require_http_methods(["POST"])
+def mark_all_notifications_read(request):
+    """Mark all notifications as read for the current user"""
+    try:
+        updated_count = models.MaintenanceNotification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).update(
+            is_read=True,
+            read_at=timezone.now()
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@require_http_methods(["POST"])
+def send_browser_notification(request):
+    """Send browser notification"""
+    try:
+        notification_id = request.POST.get('notification_id')
+        if not notification_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing notification ID'
+            })
+        
+        notification = get_object_or_404(
+            models.MaintenanceNotification,
+            pk=notification_id,
+            user=request.user
+        )
+        
+        # Mark as sent to browser
+        notification.is_sent_browser = True
+        notification.save()
+        
+        return JsonResponse({
+            'success': True,
+            'notification': {
+                'title': notification.title,
+                'message': notification.message,
+                'icon': '/static/netbox_maintenance_device/img/maintenance-icon.png',
+                'url': notification.maintenance_plan.get_absolute_url()
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
             'error': str(e)
         })

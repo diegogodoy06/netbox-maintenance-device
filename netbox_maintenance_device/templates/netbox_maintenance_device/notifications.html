@@ -1,0 +1,255 @@
+{% extends 'generic/object_list.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'netbox_maintenance_device/css/maintenance.css' %}">
+<style>
+.notification-item {
+    transition: all 0.3s ease;
+    border-left: 4px solid;
+}
+
+.notification-item.priority-critical,
+.notification-item.priority-high {
+    border-left-color: #dc2626;
+    background-color: rgba(220, 38, 38, 0.05);
+}
+
+.notification-item.priority-medium {
+    border-left-color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.05);
+}
+
+.notification-item.priority-low {
+    border-left-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.notification-item.unread {
+    font-weight: 600;
+}
+
+.notification-item.read {
+    opacity: 0.7;
+}
+
+.notification-actions {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.notification-item:hover .notification-actions {
+    opacity: 1;
+}
+
+.mark-read-btn {
+    cursor: pointer;
+}
+</style>
+{% endblock %}
+
+{% block title %}{% trans "Maintenance Notifications" %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="mdi mdi-bell-outline"></i>
+                    {% trans "Maintenance Notifications" %}
+                    {% if unread_count > 0 %}
+                        <span class="badge badge-danger ml-2">{{ unread_count }}</span>
+                    {% endif %}
+                </h5>
+                
+                {% if unread_count > 0 %}
+                <button type="button" class="btn btn-sm btn-outline-primary" id="markAllReadBtn">
+                    <i class="mdi mdi-check-all"></i>
+                    {% trans "Mark All as Read" %}
+                </button>
+                {% endif %}
+            </div>
+            
+            <div class="card-body p-0">
+                {% if table.data %}
+                    {% for notification in table.data %}
+                    <div class="notification-item p-3 border-bottom priority-{{ notification.priority }} {% if not notification.is_read %}unread{% else %}read{% endif %}" 
+                         data-notification-id="{{ notification.pk }}">
+                        <div class="d-flex align-items-start">
+                            <div class="mr-3">
+                                <i class="{{ notification.get_type_icon }} text-{{ notification.get_priority_class }} fa-lg"></i>
+                            </div>
+                            
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ notification.title }}</h6>
+                                        <p class="mb-2 text-muted">{{ notification.message }}</p>
+                                        <div class="small text-muted">
+                                            <i class="mdi mdi-server"></i>
+                                            <a href="{{ notification.maintenance_plan.device.get_absolute_url }}" class="text-decoration-none">
+                                                {{ notification.maintenance_plan.device.name }}
+                                            </a>
+                                            <span class="mx-2">•</span>
+                                            <i class="mdi mdi-wrench"></i>
+                                            <a href="{{ notification.maintenance_plan.get_absolute_url }}" class="text-decoration-none">
+                                                {{ notification.maintenance_plan.name }}
+                                            </a>
+                                            <span class="mx-2">•</span>
+                                            <i class="mdi mdi-clock-outline"></i>
+                                            {{ notification.created_at|date:"d/m/Y H:i" }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="notification-actions">
+                                        {% if not notification.is_read %}
+                                        <button type="button" class="btn btn-sm btn-outline-success mark-read-btn" 
+                                                data-notification-id="{{ notification.pk }}"
+                                                title="{% trans 'Mark as Read' %}">
+                                            <i class="mdi mdi-check"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <button type="button" class="btn btn-sm btn-outline-primary send-browser-btn" 
+                                                data-notification-id="{{ notification.pk }}"
+                                                title="{% trans 'Send Browser Notification' %}">
+                                            <i class="mdi mdi-monitor"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center p-5">
+                        <i class="mdi mdi-bell-off text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-3">{% trans "No notifications" %}</h5>
+                        <p class="text-muted">{% trans "You don't have any maintenance notifications yet." %}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Request notification permission on page load
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    
+    // Mark single notification as read
+    $(document).on('click', '.mark-read-btn', function() {
+        var notificationId = $(this).data('notification-id');
+        var $notificationItem = $(this).closest('.notification-item');
+        
+        $.ajax({
+            url: '{% url "plugins:netbox_maintenance_device:mark_notification_read" notification_id=0 %}'.replace('0', notificationId),
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    $notificationItem.removeClass('unread').addClass('read');
+                    $notificationItem.find('.mark-read-btn').remove();
+                    
+                    // Update unread count
+                    updateUnreadCount();
+                }
+            }
+        });
+    });
+    
+    // Mark all notifications as read
+    $('#markAllReadBtn').click(function() {
+        $.ajax({
+            url: '{% url "plugins:netbox_maintenance_device:mark_all_notifications_read" %}',
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('.notification-item.unread').removeClass('unread').addClass('read');
+                    $('.mark-read-btn').remove();
+                    $('#markAllReadBtn').hide();
+                    
+                    // Update badge
+                    $('.badge-danger').remove();
+                }
+            }
+        });
+    });
+    
+    // Send browser notification
+    $(document).on('click', '.send-browser-btn', function() {
+        var notificationId = $(this).data('notification-id');
+        
+        if ('Notification' in window) {
+            if (Notification.permission === 'granted') {
+                sendBrowserNotification(notificationId);
+            } else if (Notification.permission === 'default') {
+                Notification.requestPermission().then(function(permission) {
+                    if (permission === 'granted') {
+                        sendBrowserNotification(notificationId);
+                    }
+                });
+            } else {
+                alert('{% trans "Browser notifications are blocked. Please enable them in your browser settings." %}');
+            }
+        } else {
+            alert('{% trans "Browser notifications are not supported in this browser." %}');
+        }
+    });
+    
+    function sendBrowserNotification(notificationId) {
+        $.ajax({
+            url: '{% url "plugins:netbox_maintenance_device:send_browser_notification" %}',
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val(),
+                'notification_id': notificationId
+            },
+            success: function(response) {
+                if (response.success) {
+                    var notification = new Notification(response.notification.title, {
+                        body: response.notification.message,
+                        icon: response.notification.icon,
+                        tag: 'maintenance-' + notificationId
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        window.location.href = response.notification.url;
+                        notification.close();
+                    };
+                    
+                    // Auto close after 5 seconds
+                    setTimeout(function() {
+                        notification.close();
+                    }, 5000);
+                }
+            }
+        });
+    }
+    
+    function updateUnreadCount() {
+        // Update unread count in the header
+        var unreadItems = $('.notification-item.unread').length;
+        if (unreadItems === 0) {
+            $('.badge-danger').remove();
+            $('#markAllReadBtn').hide();
+        } else {
+            $('.badge-danger').text(unreadItems);
+        }
+    }
+});
+</script>
+
+{% csrf_token %}
+{% endblock %}

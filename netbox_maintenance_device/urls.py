@@ -29,4 +29,11 @@ urlpatterns = [
     # Quick Actions
     path('quick-complete/', views.quick_complete_maintenance, name='quick_complete'),
     path('schedule/', views.schedule_maintenance, name='schedule_maintenance'),
+    
+    # Notifications
+    path('notifications/', views.MaintenanceNotificationListView.as_view(), name='notifications'),
+    path('api/notifications/unread/', views.get_unread_notifications, name='api_unread_notifications'),
+    path('api/notifications/mark-read/', views.mark_notification_read, name='api_mark_notification_read'),
+    path('api/notifications/mark-all-read/', views.mark_all_notifications_read, name='api_mark_all_notifications_read'),
+    path('api/notifications/send-browser/', views.send_browser_notification, name='api_send_browser_notification'),
 ]
