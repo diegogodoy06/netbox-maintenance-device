@@ -5,14 +5,12 @@ menu_items = (
     PluginMenuItem(
         link='plugins:netbox_maintenance_device:upcoming_maintenance',
         link_text=_('Upcoming Maintenance'),
-        permissions=['netbox_maintenance_device.view_maintenanceplan'],
-        icon_class='mdi-clock-alert-outline'
+        permissions=['netbox_maintenance_device.view_maintenanceplan']
     ),
     PluginMenuItem(
         link='plugins:netbox_maintenance_device:maintenanceplan_list',
         link_text=_('Maintenance Plans'),
         permissions=['netbox_maintenance_device.view_maintenanceplan'],
-        icon_class='mdi-calendar-check',
         buttons=(
             PluginMenuButton(
                 link='plugins:netbox_maintenance_device:maintenanceplan_add',
@@ -26,7 +24,6 @@ menu_items = (
         link='plugins:netbox_maintenance_device:maintenanceexecution_list',
         link_text=_('Maintenance Executions'),
         permissions=['netbox_maintenance_device.view_maintenanceexecution'],
-        icon_class='mdi-wrench',
         buttons=(
             PluginMenuButton(
                 link='plugins:netbox_maintenance_device:maintenanceexecution_add',
