@@ -2,21 +2,16 @@ from netbox.plugins import PluginTemplateExtension
 from dcim.models import Device
 from . import models
 
-class DeviceMaintenanceTab(PluginTemplateExtension):
+class DeviceMaintenanceExtension(PluginTemplateExtension):
+    """Add maintenance information to device detail page"""
     models = ['dcim.device']
     
-    def detail_tabs(self):
-        return [
-            {
-                'title': 'Maintenance',
-                'url': 'netbox_maintenance_device:device_maintenance_tab',
-                'permission': 'netbox_maintenance_device.view_maintenanceplan',
-                'badge': self._get_maintenance_badge(),
-                'hide_if_empty': False
-            }
-        ]
+    def left_page(self):
+        """Add maintenance section to the left side of device page"""
+        return self.render('netbox_maintenance_device/device_maintenance_section.html', extra_context=self._get_maintenance_context())
     
     def buttons(self):
+        """Add maintenance buttons to device page"""
         return self.render('netbox_maintenance_device/device_maintenance_buttons.html', extra_context=self._get_maintenance_context())
     
     def _get_maintenance_context(self):
@@ -37,11 +32,5 @@ class DeviceMaintenanceTab(PluginTemplateExtension):
                 'overdue_count': overdue_count,
             }
         return {}
-    
-    def _get_maintenance_badge(self):
-        """Get badge count for overdue maintenance"""
-        context = self._get_maintenance_context()
-        overdue_count = context.get('overdue_count', 0)
-        return overdue_count if overdue_count > 0 else None
 
-template_extensions = [DeviceMaintenanceTab]
+template_extensions = [DeviceMaintenanceExtension]
