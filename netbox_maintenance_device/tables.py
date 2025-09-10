@@ -107,14 +107,26 @@ class UpcomingMaintenanceTable(NetBoxTable):
         return format_html('<span class="badge badge-success">On Track</span>')
     
     def render_actions(self, record):
+        actions = []
         days_until = record.days_until_due()
+        
+        # Schedule button - sempre disponível para planos ativos
+        actions.append(
+            '<button class="btn btn-sm btn-outline-primary schedule-btn mr-1" '
+            'data-plan-id="{}" data-plan-name="{}" '
+            'title="Schedule Maintenance">'
+            '<i class="mdi mdi-calendar-plus"></i> Schedule'
+            '</button>'.format(record.pk, record.name)
+        )
+        
+        # Complete button - apenas para manutenções vencidas ou próximas
         if record.is_overdue() or (days_until is not None and days_until <= 7):
-            return format_html(
+            actions.append(
                 '<button class="btn btn-sm btn-success quick-complete-btn" '
                 'data-plan-id="{}" data-device-id="{}" data-plan-name="{}" '
                 'title="Complete Maintenance">'
                 '<i class="mdi mdi-check-circle"></i> Complete'
-                '</button>',
-                record.pk, record.device.pk, record.name
+                '</button>'.format(record.pk, record.device.pk, record.name)
             )
-        return '-'
+        
+        return format_html(' '.join(actions)) if actions else '-'
