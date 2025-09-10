@@ -229,6 +229,9 @@ msgstr "Dispositivo"
 msgid "Maintenance Plan"
 msgstr "Plano de Manutenção"
 
+msgid "Device Maintenance"
+msgstr "Manutenção de Dispositivos"
+
 msgid "Maintenance Executions"
 msgstr "Execuções de Manutenção"
 
