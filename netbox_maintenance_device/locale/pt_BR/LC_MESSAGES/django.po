@@ -188,3 +188,12 @@ msgstr "Plano de Manutenção"
 
 msgid "Maintenance Executions"
 msgstr "Execuções de Manutenção"
+
+msgid "View Details"
+msgstr "Ver Detalhes"
+
+msgid "Scheduled"
+msgstr "Agendado"
+
+msgid "Completed"
+msgstr "Concluído"

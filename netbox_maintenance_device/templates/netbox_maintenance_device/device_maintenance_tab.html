@@ -32,19 +32,19 @@
                         </thead>
                         <tbody>
                             {% for plan in maintenance_plans %}
-                            <tr {% if plan.is_overdue %}class="table-danger"{% elif plan.days_until_due <= 7 %}class="table-warning"{% endif %}>
+                            <tr {% if plan.is_overdue %}class="table-danger"{% elif plan.days_until_due and plan.days_until_due <= 7 %}class="table-warning"{% endif %}>
                                 <td><a href="{{ plan.get_absolute_url }}">{{ plan.name }}</a></td>
                                 <td>{{ plan.get_maintenance_type_display }}</td>
                                 <td>{{ plan.frequency_days }} {% trans "days" %}</td>
                                 <td>
                                     {% with next_date=plan.get_next_maintenance_date %}
                                         {% if next_date %}
-                                            {{ next_date|date:"Y-m-d" }}
+                                            {{ next_date|date:"d/m/Y" }}
                                             {% if plan.is_overdue %}
                                                 <span class="badge badge-danger">
                                                     <i class="mdi mdi-alert-circle"></i> {% trans "Overdue" %}
                                                 </span>
-                                            {% elif plan.days_until_due <= 7 %}
+                                            {% elif plan.days_until_due and plan.days_until_due <= 7 %}
                                                 <span class="badge badge-warning">
                                                     <i class="mdi mdi-clock-alert"></i> {% trans "Due Soon" %}
                                                 </span>
@@ -62,7 +62,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if plan.is_overdue or plan.days_until_due <= 7 %}
+                                    {% if plan.is_overdue or plan.days_until_due and plan.days_until_due <= 7 %}
                                         <button class="btn btn-sm btn-success quick-complete" 
                                                 data-plan-id="{{ plan.pk }}" 
                                                 data-device-id="{{ device.pk }}"
@@ -70,6 +70,9 @@
                                             <i class="mdi mdi-check-circle"></i> {% trans "Schedule" %}
                                         </button>
                                     {% endif %}
+                                    <a href="{{ plan.get_absolute_url }}" class="btn btn-sm btn-outline-primary" title="{% trans 'View Details' %}">
+                                        <i class="mdi mdi-eye"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -79,6 +82,11 @@
                     <div class="alert alert-info">
                         <i class="mdi mdi-information"></i>
                         {% trans "No maintenance plans configured for this device." %}
+                        {% if perms.netbox_maintenance_device.add_maintenanceplan %}
+                            <a href="{% url 'plugins:netbox_maintenance_device:maintenanceplan_add' %}?device={{ device.pk }}" class="btn btn-sm btn-primary ml-2">
+                                <i class="mdi mdi-plus-thick" aria-hidden="true"></i> {% trans "Add Plan" %}
+                            </a>
+                        {% endif %}
                     </div>
                 {% endif %}
             </div>
@@ -116,10 +124,10 @@
                             {% for execution in recent_executions %}
                             <tr>
                                 <td><a href="{{ execution.get_absolute_url }}">{{ execution.maintenance_plan.name }}</a></td>
-                                <td>{{ execution.scheduled_date|date:"Y-m-d H:i" }}</td>
+                                <td>{{ execution.scheduled_date|date:"d/m/Y H:i" }}</td>
                                 <td>
                                     {% if execution.completed_date %}
-                                        {{ execution.completed_date|date:"Y-m-d H:i" }}
+                                        {{ execution.completed_date|date:"d/m/Y H:i" }}
                                     {% else %}
                                         -
                                     {% endif %}
@@ -138,20 +146,28 @@
                                             <i class="mdi mdi-check"></i> {% trans "Complete" %}
                                         </button>
                                     {% endif %}
+                                    <a href="{{ execution.get_absolute_url }}" class="btn btn-sm btn-outline-primary" title="{% trans 'View Details' %}">
+                                        <i class="mdi mdi-eye"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                    <p class="text-muted">
-                        <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_list' %}?maintenance_plan__device={{ device.pk }}">
-                            {% trans "View all maintenance history" %} →
+                    <div class="text-center mt-3">
+                        <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_list' %}?maintenance_plan__device={{ device.pk }}" class="btn btn-outline-primary">
+                            <i class="mdi mdi-history"></i> {% trans "View all maintenance history" %} →
                         </a>
-                    </p>
+                    </div>
                 {% else %}
                     <div class="alert alert-info">
                         <i class="mdi mdi-information"></i>
                         {% trans "No maintenance executions recorded for this device." %}
+                        {% if perms.netbox_maintenance_device.add_maintenanceexecution %}
+                            <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_add' %}?device={{ device.pk }}" class="btn btn-sm btn-primary ml-2">
+                                <i class="mdi mdi-wrench" aria-hidden="true"></i> {% trans "Add Execution" %}
+                            </a>
+                        {% endif %}
                     </div>
                 {% endif %}
             </div>
