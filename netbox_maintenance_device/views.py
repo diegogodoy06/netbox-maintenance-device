@@ -102,15 +102,20 @@ class UpcomingMaintenanceView(generic.ObjectListView):
 def device_maintenance_tab(request, pk):
     """Tab view for device maintenance history"""
     device = get_object_or_404(Device, pk=pk)
-    maintenance_plans = models.MaintenancePlan.objects.filter(device=device)
+    maintenance_plans = models.MaintenancePlan.objects.filter(device=device).order_by('name')
     recent_executions = models.MaintenanceExecution.objects.filter(
         maintenance_plan__device=device
     ).order_by('-scheduled_date')[:10]
     
+    # Count overdue maintenance
+    overdue_count = sum(1 for plan in maintenance_plans if plan.is_overdue())
+    
     context = {
         'device': device,
+        'object': device,  # For consistency with NetBox templates
         'maintenance_plans': maintenance_plans,
         'recent_executions': recent_executions,
+        'overdue_count': overdue_count,
     }
     
     return render(request, 'netbox_maintenance_device/device_maintenance_tab.html', context)
