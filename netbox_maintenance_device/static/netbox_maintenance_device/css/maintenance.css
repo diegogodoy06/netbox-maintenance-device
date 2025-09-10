@@ -17,28 +17,18 @@
 .dark .table-danger {
     --tblr-table-bg: rgb(92, 0, 8) !important;
     background-color: rgb(92, 0, 8) !important;
+    --tblr-table-hover-bg: rgb(115, 0, 10) !important;
     color: #ffffff !important;
 }
 
 [data-bs-theme="dark"] .table-warning,
 .dark .table-warning {
-    --tblr-table-bg: rgb(161, 123, 10) !important;
-    background-color: rgb(161, 123, 10) !important;
+    --tblr-table-bg: #e49400 !important;
+    --tblr-table-hover-bg: #e5a700 !important;
+    background-color: #e49400 !important;
     color: #ffffff !important;
 }
 
-/* Dark mode hover states */
-[data-bs-theme="dark"] .table-danger:hover,
-.dark .table-danger:hover {
-    --tblr-table-bg: rgb(115, 0, 10) !important;
-    background-color: rgb(115, 0, 10) !important;
-}
-
-[data-bs-theme="dark"] .table-warning:hover,
-.dark .table-warning:hover {
-    --tblr-table-bg: rgb(185, 140, 12) !important;
-    background-color: rgb(185, 140, 12) !important;
-}
 
 /* Ensure text is always readable */
 .table-danger td,
