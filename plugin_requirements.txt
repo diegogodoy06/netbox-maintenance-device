@@ -1,6 +1,0 @@
-# NetBox Plugin Requirements for Docker Installation
-# Place this file in your netbox-docker directory root
-# Arquivo de requisitos de plugins do NetBox para instalação Docker
-# Coloque este arquivo na raiz do diretório netbox-docker
-
-https://github.com/diegogodoy06/netbox-maintenance-device/archive/main.tar.gz
