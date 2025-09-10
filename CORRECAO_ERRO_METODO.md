@@ -1,19 +1,64 @@
-# 🐛 CORREÇÃO DE ERRO: TypeError '<<=' not supported
+# 🐛 CORREÇÕES DE ERROS IMPLEMENTADAS
 
-## ✅ Problema Identificado e Resolvido
+## 📋 Histórico de Correções
 
-### **Erro Original:**
+### **1. 🔧 TypeError: ObjectChangeLogView.get() - NetBox 4.4**
+
+#### **❌ Erro Encontrado:**
+```
+<class 'TypeError'>
+ObjectChangeLogView.get() missing 1 required positional argument: 'model'
+```
+
+#### **🔍 Diagnóstico:**
+- **Versão NetBox:** 4.4.0
+- **Páginas Afetadas:** Todas as páginas de changelog do plugin
+- **Causa:** Mudança na implementação do `ObjectChangeLogView` no NetBox 4.4
+
+#### **✅ Correção Implementada:**
+
+**Views Simplificadas:**
+```python
+# views.py
+class MaintenancePlanChangeLogView(generic.ObjectChangeLogView):
+    queryset = models.MaintenancePlan.objects.all()
+    # ✅ Removido get_extra_context
+
+class MaintenanceExecutionChangeLogView(generic.ObjectChangeLogView):
+    queryset = models.MaintenanceExecution.objects.all()
+    # ✅ Removido get_extra_context
+```
+
+**URLs com Modelo nos Kwargs:**
+```python
+# urls.py
+path('maintenance-plans/<int:pk>/changelog/', 
+     views.MaintenancePlanChangeLogView.as_view(), 
+     name='maintenanceplan_changelog', 
+     kwargs={'model': models.MaintenancePlan}),  # ✅ Modelo nos kwargs
+
+path('maintenance-executions/<int:pk>/changelog/', 
+     views.MaintenanceExecutionChangeLogView.as_view(), 
+     name='maintenanceexecution_changelog', 
+     kwargs={'model': models.MaintenanceExecution}),  # ✅ Modelo nos kwargs
+```
+
+---
+
+### **2. 🐛 TypeError: '<<=' not supported**
+
+#### **❌ Erro Original:**
 ```
 TypeError: '<=' not supported between instances of 'method' and 'int'
 ```
 
-### **Causa Raiz:**
+#### **🔍 Causa Raiz:**
 - Métodos Python `days_until_due` sendo chamados sem parênteses `()`
 - Comparação entre objeto método e inteiro
 
-### **Locais Corrigidos:**
+#### **✅ Locais Corrigidos:**
 
-#### **1. template_content.py (Linha 33)**
+**template_content.py (Linha 33):**
 ```python
 # ANTES (ERRO):
 elif plan.days_until_due and plan.days_until_due <= 7 and plan.days_until_due > 0:
@@ -24,7 +69,7 @@ else:
     if days_until and days_until <= 7 and days_until > 0:
 ```
 
-#### **2. tables.py (Linha 110)**
+**tables.py (Linha 110):**
 ```python
 # ANTES (ERRO):
 if record.is_overdue() or (record.days_until_due() is not None and record.days_until_due() <= 7):
@@ -34,31 +79,7 @@ days_until = record.days_until_due()
 if record.is_overdue() or (days_until is not None and days_until <= 7):
 ```
 
-### **Melhorias Implementadas:**
-
-#### **Otimização de Performance:**
-- ✅ Método `days_until_due()` chamado apenas uma vez
-- ✅ Resultado armazenado em variável local
-- ✅ Evita múltiplas execuções da mesma operação
-
-#### **Correção de Lógica:**
-- ✅ Comparações corretas entre inteiros
-- ✅ Verificação adequada de valores `None`
-- ✅ Estrutura `if/else` mais clara
-
-## 🔍 Análise Técnica
-
-### **Por que o erro ocorria:**
-1. **Python:** `plan.days_until_due` retorna objeto método
-2. **Comparação:** `método <= 7` é inválida
-3. **Correção:** `plan.days_until_due()` executa e retorna inteiro
-
-### **Templates Django:**
-- ✅ Django resolve métodos automaticamente nos templates
-- ✅ Não é necessário `()` em `{{ plan.days_until_due }}`
-- ✅ Problema estava apenas no código Python
-
-## 🚀 Como Testar a Correção
+## 🚀 Como Aplicar Todas as Correções
 
 ### **1. Reinstalar Plugin:**
 ```bash
@@ -70,30 +91,52 @@ pip install git+https://github.com/diegogodoy06/netbox-maintenance-device.git
 docker-compose restart netbox
 ```
 
-### **3. Verificar Funcionamento:**
-1. **Acesse dispositivo:** https://ntbx.steelbras.com.br/dcim/devices/198/
-2. **Verifique badge:** Deve aparecer sem erro
-3. **Teste cores:** Verde/Amarelo/Vermelho conforme status
-4. **Clique na seção:** "Ver Toda Manutenção" deve funcionar
+### **3. Testar Funcionalidades:**
 
-### **4. Cenários de Teste:**
-- ✅ **Dispositivo sem manutenções:** Badge não aparece
-- ✅ **Manutenções em dia:** Badge verde "OK"
-- ✅ **Manutenções próximas:** Badge amarelo com número
-- ✅ **Manutenções vencidas:** Badge vermelho com número
+#### **Changelog (Correção 1):**
+- ✅ Acesse qualquer plano de manutenção
+- ✅ Clique na aba "Changelog"
+- ✅ Deve carregar sem TypeError
 
-## 📋 Prevenção Futura
+#### **Badges de Status (Correção 2):**
+- ✅ Acesse página de dispositivo
+- ✅ Verifique badges de manutenção
+- ✅ Cores devem aparecer corretamente
 
-### **Boas Práticas Implementadas:**
-1. **Evitar múltiplas chamadas:** Armazenar resultado em variável
-2. **Verificar None:** Sempre verificar `is not None`
-3. **Lógica clara:** Usar `if/else` estruturado
-4. **Teste completo:** Verificar todos os cenários
+## 📝 Compatibilidade NetBox
 
-### **Code Review:**
-- ✅ Todos os métodos verificados
-- ✅ Comparações validadas
-- ✅ Performance otimizada
-- ✅ Lógica simplificada
+| Versão NetBox | Changelog | Badges | Status |
+|---------------|-----------|--------|--------|
+| **≤ 4.3** | ⚠️ | ✅ | Parcial |
+| **≥ 4.4** | ✅ | ✅ | Total |
 
-**Status: ERRO CORRIGIDO E OTIMIZADO! 🐛➡️✅**
+## 🔍 URLs de Teste
+
+### **Changelog:**
+- `/plugins/maintenance-device/maintenance-plans/1/changelog/`
+- `/plugins/maintenance-device/maintenance-executions/1/changelog/`
+
+### **Badges:**
+- `/dcim/devices/[device-id]/` (qualquer dispositivo)
+
+## ⚠️ Notas Importantes
+
+1. **NetBox 4.4:** Mudança breaking no `ObjectChangeLogView`
+2. **Performance:** Métodos otimizados para evitar múltiplas chamadas
+3. **Compatibilidade:** Plugin totalmente funcional no NetBox 4.4
+
+## 📁 Arquivos Modificados
+
+```
+netbox_maintenance_device/
+├── views.py              # Correção changelog
+├── urls.py               # Kwargs para modelo
+├── template_content.py   # Correção comparação método
+└── tables.py             # Otimização performance
+```
+
+---
+**Data:** 10 de setembro de 2025  
+**NetBox:** 4.4.0  
+**Status:** ✅ Todas as Correções Implementadas  
+**Referência:** [NetBox Feature Views Documentation](https://docs.netbox.dev/en/stable/plugins/development/views/#feature-views)

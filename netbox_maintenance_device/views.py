@@ -34,11 +34,6 @@ class MaintenancePlanDeleteView(generic.ObjectDeleteView):
 
 class MaintenancePlanChangeLogView(generic.ObjectChangeLogView):
     queryset = models.MaintenancePlan.objects.all()
-    
-    def get_extra_context(self, request, instance):
-        return {
-            'model': models.MaintenancePlan,
-        }
 
 
 class MaintenanceExecutionListView(generic.ObjectListView):
@@ -62,11 +57,6 @@ class MaintenanceExecutionDeleteView(generic.ObjectDeleteView):
 
 class MaintenanceExecutionChangeLogView(generic.ObjectChangeLogView):
     queryset = models.MaintenanceExecution.objects.all()
-    
-    def get_extra_context(self, request, instance):
-        return {
-            'model': models.MaintenanceExecution,
-        }
 
 
 class UpcomingMaintenanceView(generic.ObjectListView):
