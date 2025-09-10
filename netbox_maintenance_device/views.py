@@ -26,6 +26,10 @@ class MaintenancePlanDeleteView(generic.ObjectDeleteView):
     queryset = models.MaintenancePlan.objects.all()
 
 
+class MaintenancePlanChangeLogView(generic.ObjectChangeLogView):
+    queryset = models.MaintenancePlan.objects.all()
+
+
 class MaintenanceExecutionListView(generic.ObjectListView):
     queryset = models.MaintenanceExecution.objects.all()
     table = tables.MaintenanceExecutionTable
@@ -42,6 +46,10 @@ class MaintenanceExecutionEditView(generic.ObjectEditView):
 
 
 class MaintenanceExecutionDeleteView(generic.ObjectDeleteView):
+    queryset = models.MaintenanceExecution.objects.all()
+
+
+class MaintenanceExecutionChangeLogView(generic.ObjectChangeLogView):
     queryset = models.MaintenanceExecution.objects.all()
 
 
