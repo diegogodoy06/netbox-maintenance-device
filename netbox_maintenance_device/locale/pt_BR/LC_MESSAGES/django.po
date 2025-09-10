@@ -35,7 +35,16 @@ msgid "Devices"
 msgstr "Dispositivos"
 
 msgid "Maintenance"
-msgstr "Manutenção"ESS>, YEAR.
+msgstr "Manutenção"
+
+msgid "Overdue maintenance items"
+msgstr "Itens de manutenção vencidos"
+
+msgid "Maintenance due soon"
+msgstr "Manutenção vence em breve"
+
+msgid "All maintenance up to date"
+msgstr "Toda manutenção em dia"ESS>, YEAR.
 #
 #, fuzzy
 msgid ""
