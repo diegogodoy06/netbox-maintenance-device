@@ -67,13 +67,14 @@ class UpcomingMaintenanceTable(NetBoxTable):
     next_due = tables.Column(empty_values=(), verbose_name='Next Due')
     days_until = tables.Column(empty_values=(), verbose_name='Days Until Due')
     status = tables.Column(empty_values=(), verbose_name='Status')
+    actions = tables.Column(empty_values=(), verbose_name='Actions', orderable=False)
     
     class Meta(NetBoxTable.Meta):
         model = models.MaintenancePlan
         fields = ('pk', 'device', 'name', 'maintenance_type', 'next_due', 
-                 'days_until', 'status')
+                 'days_until', 'status', 'actions')
         default_columns = ('device', 'name', 'maintenance_type', 'next_due', 
-                          'days_until', 'status')
+                          'days_until', 'status', 'actions')
     
     def render_next_due(self, record):
         next_date = record.get_next_maintenance_date()
@@ -85,22 +86,34 @@ class UpcomingMaintenanceTable(NetBoxTable):
         days = record.days_until_due()
         if days is not None:
             if days < 0:
-                return format_html('<span class="text-danger">{} days overdue</span>', abs(days))
+                return format_html('<span class="text-danger"><i class="mdi mdi-alert-circle"></i> {} days overdue</span>', abs(days))
             elif days == 0:
-                return format_html('<span class="text-warning">Due today</span>')
+                return format_html('<span class="text-warning"><i class="mdi mdi-clock-alert"></i> Due today</span>')
             else:
                 return f"{days} days"
         return '-'
     
     def render_status(self, record):
         if record.is_overdue():
-            return format_html('<span class="badge badge-danger">Overdue</span>')
+            return format_html('<span class="badge badge-danger"><i class="mdi mdi-alert-circle"></i> Overdue</span>')
         
         days_until = record.days_until_due()
         if days_until is not None:
             if days_until <= 7:
-                return format_html('<span class="badge badge-warning">Due Soon</span>')
+                return format_html('<span class="badge badge-warning"><i class="mdi mdi-clock-alert"></i> Due Soon</span>')
             else:
                 return format_html('<span class="badge badge-info">Upcoming</span>')
         
         return format_html('<span class="badge badge-success">On Track</span>')
+    
+    def render_actions(self, record):
+        if record.is_overdue() or (record.days_until_due() is not None and record.days_until_due() <= 7):
+            return format_html(
+                '<button class="btn btn-sm btn-success quick-complete-btn" '
+                'data-plan-id="{}" data-device-id="{}" data-plan-name="{}" '
+                'title="Complete Maintenance">'
+                '<i class="mdi mdi-check-circle"></i> Complete'
+                '</button>',
+                record.pk, record.device.pk, record.name
+            )
+        return '-'

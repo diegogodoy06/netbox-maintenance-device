@@ -1,0 +1,17 @@
+{% load i18n %}
+
+{% if perms.netbox_maintenance_device.add_maintenanceplan %}
+<a href="{% url 'plugins:netbox_maintenance_device:maintenanceplan_add' %}?device={{ object.pk }}" class="btn btn-sm btn-success">
+    <i class="mdi mdi-plus-thick" aria-hidden="true"></i> {% trans "Add Maintenance Plan" %}
+</a>
+{% endif %}
+
+{% if perms.netbox_maintenance_device.add_maintenanceexecution %}
+<a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_add' %}?device={{ object.pk }}" class="btn btn-sm btn-primary">
+    <i class="mdi mdi-wrench" aria-hidden="true"></i> {% trans "Add Execution" %}
+</a>
+{% endif %}
+
+<a href="{% url 'plugins:netbox_maintenance_device:device_maintenance_tab' pk=object.pk %}" class="btn btn-sm btn-outline-primary">
+    <i class="mdi mdi-calendar-clock" aria-hidden="true"></i> {% trans "View Maintenance" %}
+</a>

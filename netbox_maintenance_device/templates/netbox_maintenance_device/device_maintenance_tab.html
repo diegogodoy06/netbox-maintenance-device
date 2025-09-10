@@ -1,14 +1,18 @@
 {% load render_table from django_tables2 %}
+{% load i18n %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'netbox_maintenance_device/css/maintenance.css' %}">
 
 <div class="row">
     <div class="col col-md-12">
         <div class="card">
             <h5 class="card-header">
-                Maintenance Plans
+                <i class="mdi mdi-calendar-clock"></i> {% trans "Maintenance Plans" %}
                 <div class="card-actions">
                     {% if perms.netbox_maintenance_device.add_maintenanceplan %}
                         <a href="{% url 'plugins:netbox_maintenance_device:maintenanceplan_add' %}?device={{ device.pk }}" class="btn btn-sm btn-primary">
-                            <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add Plan
+                            <i class="mdi mdi-plus-thick" aria-hidden="true"></i> {% trans "Add Plan" %}
                         </a>
                     {% endif %}
                 </div>
@@ -18,27 +22,32 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Type</th>
-                                <th>Frequency</th>
-                                <th>Next Due</th>
-                                <th>Status</th>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Frequency" %}</th>
+                                <th>{% trans "Next Due" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Actions" %}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for plan in maintenance_plans %}
-                            <tr>
+                            <tr {% if plan.is_overdue %}class="table-danger"{% elif plan.days_until_due <= 7 %}class="table-warning"{% endif %}>
                                 <td><a href="{{ plan.get_absolute_url }}">{{ plan.name }}</a></td>
                                 <td>{{ plan.get_maintenance_type_display }}</td>
-                                <td>{{ plan.frequency_days }} days</td>
+                                <td>{{ plan.frequency_days }} {% trans "days" %}</td>
                                 <td>
                                     {% with next_date=plan.get_next_maintenance_date %}
                                         {% if next_date %}
                                             {{ next_date|date:"Y-m-d" }}
                                             {% if plan.is_overdue %}
-                                                <span class="badge badge-danger">Overdue</span>
+                                                <span class="badge badge-danger">
+                                                    <i class="mdi mdi-alert-circle"></i> {% trans "Overdue" %}
+                                                </span>
                                             {% elif plan.days_until_due <= 7 %}
-                                                <span class="badge badge-warning">Due Soon</span>
+                                                <span class="badge badge-warning">
+                                                    <i class="mdi mdi-clock-alert"></i> {% trans "Due Soon" %}
+                                                </span>
                                             {% endif %}
                                         {% else %}
                                             -
@@ -47,9 +56,19 @@
                                 </td>
                                 <td>
                                     {% if plan.is_active %}
-                                        <span class="badge badge-success">Active</span>
+                                        <span class="badge badge-success">{% trans "Active" %}</span>
                                     {% else %}
-                                        <span class="badge badge-secondary">Inactive</span>
+                                        <span class="badge badge-secondary">{% trans "Inactive" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if plan.is_overdue or plan.days_until_due <= 7 %}
+                                        <button class="btn btn-sm btn-success quick-complete" 
+                                                data-plan-id="{{ plan.pk }}" 
+                                                data-device-id="{{ device.pk }}"
+                                                title="{% trans 'Schedule Immediate Maintenance' %}">
+                                            <i class="mdi mdi-check-circle"></i> {% trans "Schedule" %}
+                                        </button>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -57,7 +76,10 @@
                         </tbody>
                     </table>
                 {% else %}
-                    <p class="text-muted">No maintenance plans configured for this device.</p>
+                    <div class="alert alert-info">
+                        <i class="mdi mdi-information"></i>
+                        {% trans "No maintenance plans configured for this device." %}
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -68,11 +90,11 @@
     <div class="col col-md-12">
         <div class="card">
             <h5 class="card-header">
-                Recent Maintenance History
+                <i class="mdi mdi-history"></i> {% trans "Recent Maintenance History" %}
                 <div class="card-actions">
                     {% if perms.netbox_maintenance_device.add_maintenanceexecution %}
                         <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_add' %}" class="btn btn-sm btn-primary">
-                            <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add Execution
+                            <i class="mdi mdi-plus-thick" aria-hidden="true"></i> {% trans "Add Execution" %}
                         </a>
                     {% endif %}
                 </div>
@@ -82,11 +104,12 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Plan</th>
-                                <th>Scheduled</th>
-                                <th>Completed</th>
-                                <th>Status</th>
-                                <th>Technician</th>
+                                <th>{% trans "Plan" %}</th>
+                                <th>{% trans "Scheduled" %}</th>
+                                <th>{% trans "Completed" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Technician" %}</th>
+                                <th>{% trans "Actions" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -107,19 +130,109 @@
                                     </span>
                                 </td>
                                 <td>{{ execution.technician|default:"-" }}</td>
+                                <td>
+                                    {% if execution.status != 'completed' and execution.status != 'cancelled' %}
+                                        <button class="btn btn-sm btn-success complete-execution" 
+                                                data-execution-id="{{ execution.pk }}"
+                                                title="{% trans 'Mark as Completed' %}">
+                                            <i class="mdi mdi-check"></i> {% trans "Complete" %}
+                                        </button>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                     <p class="text-muted">
                         <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_list' %}?maintenance_plan__device={{ device.pk }}">
-                            View all maintenance history →
+                            {% trans "View all maintenance history" %} →
                         </a>
                     </p>
                 {% else %}
-                    <p class="text-muted">No maintenance executions recorded for this device.</p>
+                    <div class="alert alert-info">
+                        <i class="mdi mdi-information"></i>
+                        {% trans "No maintenance executions recorded for this device." %}
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- Quick Completion Modal -->
+<div class="modal fade" id="quickCompleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Complete Maintenance" %}</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="quickCompleteForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="executionId" name="execution_id">
+                    <input type="hidden" id="planId" name="plan_id">
+                    <input type="hidden" id="deviceId" name="device_id">
+                    <div class="form-group">
+                        <label for="technician">{% trans "Technician" %}</label>
+                        <input type="text" class="form-control" id="technician" name="technician">
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">{% trans "Notes" %}</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-success" id="confirmComplete">{% trans "Complete Maintenance" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Handle quick completion for maintenance plans
+    $('.quick-complete').click(function() {
+        var planId = $(this).data('plan-id');
+        var deviceId = $(this).data('device-id');
+        $('#planId').val(planId);
+        $('#deviceId').val(deviceId);
+        $('#executionId').val('');
+        $('#quickCompleteModal').modal('show');
+    });
+    
+    // Handle completion for existing executions
+    $('.complete-execution').click(function() {
+        var executionId = $(this).data('execution-id');
+        $('#executionId').val(executionId);
+        $('#planId').val('');
+        $('#deviceId').val('');
+        $('#quickCompleteModal').modal('show');
+    });
+    
+    // Handle form submission
+    $('#confirmComplete').click(function() {
+        var formData = $('#quickCompleteForm').serialize();
+        
+        $.ajax({
+            url: '{% url "plugins:netbox_maintenance_device:quick_complete" %}',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('{% trans "Error completing maintenance" %}: ' + response.error);
+                }
+            },
+            error: function() {
+                alert('{% trans "Error completing maintenance" %}');
+            }
+        });
+    });
+});
+</script>

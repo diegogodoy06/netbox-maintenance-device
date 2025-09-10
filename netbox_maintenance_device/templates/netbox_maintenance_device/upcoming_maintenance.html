@@ -1,24 +1,133 @@
 {% extends 'generic/object_list.html' %}
 {% load render_table from django_tables2 %}
+{% load i18n %}
+{% load static %}
 
-{% block title %}Upcoming & Overdue Maintenance{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'netbox_maintenance_device/css/maintenance.css' %}">
+{% endblock %}
+
+{% block title %}{% trans "Upcoming & Overdue Maintenance" %}{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col col-md-12">
+        <!-- Overdue Maintenance Alert -->
+        {% if overdue_count > 0 %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="mdi mdi-alert-circle-outline"></i>
+            <strong>{% trans "Attention!" %}</strong> 
+            {% blocktrans count counter=overdue_count %}
+                There is {{ counter }} overdue maintenance item that requires immediate attention.
+            {% plural %}
+                There are {{ counter }} overdue maintenance items that require immediate attention.
+            {% endblocktrans %}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+        {% endif %}
+        
         <div class="card">
             <h5 class="card-header">
-                Upcoming & Overdue Maintenance
+                <i class="mdi mdi-calendar-alert"></i> {% trans "Upcoming & Overdue Maintenance" %}
                 <span class="badge badge-secondary float-right">{{ table.data|length }}</span>
             </h5>
             <div class="card-body">
                 {% if table.data %}
                     {% render_table table 'inc/table.html' %}
                 {% else %}
-                    <div class="text-muted">No upcoming or overdue maintenance found.</div>
+                    <div class="alert alert-info">
+                        <i class="mdi mdi-information"></i>
+                        {% trans "No upcoming or overdue maintenance found." %}
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- Quick Completion Modal -->
+<div class="modal fade" id="quickCompleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Complete Maintenance" %}</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="quickCompleteForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="planId" name="plan_id">
+                    <input type="hidden" id="deviceId" name="device_id">
+                    <div class="form-group">
+                        <label for="technician">{% trans "Technician" %}</label>
+                        <input type="text" class="form-control" id="technician" name="technician" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">{% trans "Notes" %}</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-success" id="confirmComplete">
+                    <i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Handle quick completion
+    $(document).on('click', '.quick-complete-btn', function() {
+        var planId = $(this).data('plan-id');
+        var deviceId = $(this).data('device-id');
+        var planName = $(this).data('plan-name');
+        
+        $('#planId').val(planId);
+        $('#deviceId').val(deviceId);
+        $('.modal-title').text('{% trans "Complete Maintenance" %}: ' + planName);
+        $('#quickCompleteModal').modal('show');
+    });
+    
+    // Handle form submission
+    $('#confirmComplete').click(function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> {% trans "Processing..." %}');
+        
+        var formData = $('#quickCompleteForm').serialize();
+        
+        $.ajax({
+            url: '{% url "plugins:netbox_maintenance_device:quick_complete" %}',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#quickCompleteModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('{% trans "Error completing maintenance" %}: ' + response.error);
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
+                }
+            },
+            error: function() {
+                alert('{% trans "Error completing maintenance. Please try again." %}');
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
+            }
+        });
+    });
+    
+    // Reset form when modal is hidden
+    $('#quickCompleteModal').on('hidden.bs.modal', function() {
+        $('#quickCompleteForm')[0].reset();
+        $('#confirmComplete').prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
+    });
+});
+</script>
 {% endblock %}
