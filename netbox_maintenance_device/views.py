@@ -349,8 +349,8 @@ def get_unread_notifications(request):
         
         return JsonResponse({
             'success': True,
-            'notifications': notifications_data,
-            'unread_count': len(notifications_data)
+            'count': len(notifications_data),
+            'notifications': notifications_data
         })
         
     except Exception as e:

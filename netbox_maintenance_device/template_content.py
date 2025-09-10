@@ -53,7 +53,7 @@ from . import models
 
 class DeviceMaintenanceExtension(PluginTemplateExtension):
     """Add maintenance information to device detail page"""
-    models = ['dcim.device']
+    model = 'dcim.device'
     
     def left_page(self):
         """Add maintenance section to the left side of device page"""
@@ -99,11 +99,23 @@ class DeviceMaintenanceExtension(PluginTemplateExtension):
 
 class MaintenanceNotificationExtension(PluginTemplateExtension):
     """Add notification indicator to navbar"""
-    models = ['extras.dashboard', 'dcim.device', 'netbox_maintenance_device.maintenanceplan']
+    model = 'dcim.device'
     
     def navbar(self):
         """Add notification indicator to navbar"""
-        return self.render('netbox_maintenance_device/notification_indicator.html')
+        if hasattr(self, 'request') and self.request.user.is_authenticated:
+            unread_count = models.MaintenanceNotification.objects.filter(
+                user=self.request.user,
+                is_read=False
+            ).count()
+            
+            context = {
+                'unread_count': unread_count,
+                'user': self.request.user
+            }
+            
+            return self.render('netbox_maintenance_device/notification_indicator.html', extra_context=context)
+        return ""
 
 
 template_extensions = [DeviceMaintenanceExtension, MaintenanceNotificationExtension]
