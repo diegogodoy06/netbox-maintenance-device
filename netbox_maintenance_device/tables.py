@@ -64,9 +64,9 @@ class UpcomingMaintenanceTable(NetBoxTable):
     device = tables.Column(linkify=True)
     name = tables.Column(linkify=True)
     maintenance_type = tables.Column()
-    next_due = tables.Column(empty_values=(), verbose_name='Next Due')
-    days_until = tables.Column(empty_values=(), verbose_name='Days Until Due')
-    status = tables.Column(empty_values=(), verbose_name='Status')
+    next_due = tables.Column(empty_values=(), verbose_name='Next Due', orderable=False)
+    days_until = tables.Column(empty_values=(), verbose_name='Days Until Due', orderable=False)
+    status = tables.Column(empty_values=(), verbose_name='Status', orderable=False)
     actions = tables.Column(empty_values=(), verbose_name='Actions', orderable=False)
     
     class Meta(NetBoxTable.Meta):
