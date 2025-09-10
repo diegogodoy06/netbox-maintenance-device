@@ -1,8 +1,42 @@
+{% extends 'base/layout.html' %}
 {% load render_table from django_tables2 %}
 {% load i18n %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'netbox_maintenance_device/css/maintenance.css' %}">
+{% block title %}{{ device.name }} - {% trans "Maintenance" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2">
+                <a href="{{ device.get_absolute_url }}" class="text-decoration-none">{{ device.name }}</a>
+                <span class="text-muted">/</span>
+                {% trans "Maintenance" %}
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dcim:device_list' %}">{% trans "Devices" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ device.get_absolute_url }}">{{ device.name }}</a></li>
+                    <li class="breadcrumb-item active">{% trans "Maintenance" %}</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="btn-group">
+            {% if perms.netbox_maintenance_device.add_maintenanceplan %}
+                <a href="{% url 'plugins:netbox_maintenance_device:maintenanceplan_add' %}?device={{ device.pk }}" class="btn btn-primary">
+                    <i class="mdi mdi-plus-thick" aria-hidden="true"></i> {% trans "Add Plan" %}
+                </a>
+            {% endif %}
+            {% if perms.netbox_maintenance_device.add_maintenanceexecution %}
+                <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_add' %}?device={{ device.pk }}" class="btn btn-outline-primary">
+                    <i class="mdi mdi-wrench" aria-hidden="true"></i> {% trans "Add Execution" %}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+<link rel="stylesheet" href="{% static 'netbox_maintenance_device/css/maintenance.css' %}">>
 
 <div class="row">
     <div class="col col-md-12">
@@ -252,3 +286,5 @@ $(document).ready(function() {
     });
 });
 </script>
+</div>
+{% endblock %}

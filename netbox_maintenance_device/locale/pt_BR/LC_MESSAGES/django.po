@@ -29,7 +29,13 @@ msgid "View All Maintenance"
 msgstr "Ver Toda Manutenção"
 
 msgid "No maintenance plans configured"
-msgstr "Nenhum plano de manutenção configurado"ESS>, YEAR.
+msgstr "Nenhum plano de manutenção configurado"
+
+msgid "Devices"
+msgstr "Dispositivos"
+
+msgid "Maintenance"
+msgstr "Manutenção"ESS>, YEAR.
 #
 #, fuzzy
 msgid ""
