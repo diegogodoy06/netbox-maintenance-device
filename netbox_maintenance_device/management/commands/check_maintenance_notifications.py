@@ -1,9 +1,11 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from netbox_maintenance_device.models import MaintenancePlan, MaintenanceNotification
 from datetime import timedelta
+
+User = get_user_model()
 
 class Command(BaseCommand):
     help = 'Check for overdue and upcoming maintenance and create notifications'

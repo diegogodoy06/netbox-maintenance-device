@@ -5,7 +5,8 @@ from django.utils.translation import gettext_lazy as _
 from datetime import timedelta
 from netbox.models import NetBoxModel
 from dcim.models import Device
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.conf import settings
 
 class MaintenancePlan(NetBoxModel):
     """Maintenance plan for a device with frequency and type"""
@@ -78,6 +79,7 @@ class MaintenancePlan(NetBoxModel):
         
         if not users:
             # Get staff users as default
+            User = get_user_model()
             users = User.objects.filter(is_active=True, is_staff=True)
         
         notifications_created = []
@@ -169,7 +171,7 @@ class MaintenanceNotification(NetBoxModel):
     ]
     
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='maintenance_notifications',
         verbose_name=_('User')
