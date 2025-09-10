@@ -12,8 +12,8 @@ class MaintenancePlanSerializer(NetBoxModelSerializer):
         model = models.MaintenancePlan
         fields = [
             'id', 'url', 'display', 'device', 'name', 'description', 
-            'maintenance_type', 'frequency_days', 'last_executed', 
-            'is_active', 'created', 'last_updated', 'custom_field_data', 'tags'
+            'maintenance_type', 'frequency_days', 'is_active', 
+            'created', 'last_updated', 'custom_field_data', 'tags'
         ]
 
 
