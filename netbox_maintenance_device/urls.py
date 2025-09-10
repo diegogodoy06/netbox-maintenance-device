@@ -10,6 +10,7 @@ urlpatterns = [
     path('maintenance-plans/<int:pk>/', views.MaintenancePlanView.as_view(), name='maintenanceplan'),
     path('maintenance-plans/<int:pk>/edit/', views.MaintenancePlanEditView.as_view(), name='maintenanceplan_edit'),
     path('maintenance-plans/<int:pk>/delete/', views.MaintenancePlanDeleteView.as_view(), name='maintenanceplan_delete'),
+    path('maintenance-plans/<int:pk>/changelog/', views.MaintenancePlanChangeLogView.as_view(), name='maintenanceplan_changelog'),
     
     # Maintenance Executions
     path('maintenance-executions/', views.MaintenanceExecutionListView.as_view(), name='maintenanceexecution_list'),
@@ -17,6 +18,7 @@ urlpatterns = [
     path('maintenance-executions/<int:pk>/', views.MaintenanceExecutionView.as_view(), name='maintenanceexecution'),
     path('maintenance-executions/<int:pk>/edit/', views.MaintenanceExecutionEditView.as_view(), name='maintenanceexecution_edit'),
     path('maintenance-executions/<int:pk>/delete/', views.MaintenanceExecutionDeleteView.as_view(), name='maintenanceexecution_delete'),
+    path('maintenance-executions/<int:pk>/changelog/', views.MaintenanceExecutionChangeLogView.as_view(), name='maintenanceexecution_changelog'),
     
     # Dashboard
     path('upcoming/', views.UpcomingMaintenanceView.as_view(), name='upcoming_maintenance'),
