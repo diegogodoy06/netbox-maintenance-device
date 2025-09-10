@@ -1,60 +1,63 @@
 # NetBox Maintenance Device Plugin
 
-A NetBox plugin for managing device preventive and corrective maintenance.
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
+[![NetBox](https://img.shields.io/badge/NetBox-4.0%2B-orange)](https://netbox.dev/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+[![Language](https://img.shields.io/badge/Language-EN%20%7C%20PT--BR-brightgreen)](README.md)
+
+A comprehensive NetBox plugin for managing device preventive and corrective maintenance with enhanced visual indicators, scheduling capabilities, and multi-language support.
 
 ## Features
 
-- **Maintenance Plans**: Create maintenance plans for devices with configurable frequency
-- **Maintenance Executions**: Record and track maintenance executions
-- **Device Integration**: View maintenance history directly on device pages with dedicated maintenance tab
-- **Dashboard**: Monitor upcoming and overdue maintenance with enhanced visual alerts
-- **Types**: Support for both preventive and corrective maintenance
-- **Status Tracking**: Track maintenance status from scheduled to completed
-- **Quick Actions**: Complete maintenance executions directly from upcoming view and device tab
-- **Internationalization**: Full Portuguese-BR language support
-- **Enhanced UI**: Eye-catching visual indicators for overdue maintenance
+- **Maintenance Plans**: Create and manage maintenance plans for devices with configurable frequency
+- **Maintenance Executions**: Record and track maintenance executions with status monitoring
+- **Device Integration**: View maintenance history directly on device pages with dedicated tabs
+- **Quick Actions**: Schedule and complete maintenance directly from the interface
+
+
+## Compatibility
+
+| NetBox Version | Plugin Support | Status |
+|----------------|----------------|---------|
+| 4.3.x | ✅ | Full Support |
+| 4.2.x | ✅ | Full Support |
+| 4.1.x | ✅ | Full Support |
+| 4.4.x | ✅ | Full Support |
+| 4.0.x | ✅ | Full Support |
+| 3.x | ❌ | Not Supported |
+
+
 
 ## Installation
 
-### Standard Installation
+### Method 1: PyPI Installation (Recommended)
 
-1. Install the plugin:
 ```bash
 pip install netbox-maintenance-device
 ```
 
-2. Add to NetBox configuration (`configuration.py`):
-```python
-PLUGINS = [
-    'netbox_maintenance_device',
-]
-```
+### Method 2: GitHub Installation
 
-3. Run migrations:
 ```bash
-python manage.py migrate
+pip install git+https://github.com/diegogodoy06/netbox-maintenance-device.git
 ```
 
-4. Restart NetBox services.
-
-### Docker Installation (netbox-docker)
+### Method 3: Docker Installation
 
 For Docker-based NetBox installations using [netbox-docker](https://github.com/netbox-community/netbox-docker):
 
 > **📋 For detailed Docker installation instructions in English and Portuguese, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md)**
 
-#### Quick Start
+#### Quick Docker Setup
 
-1. Add the plugin to `plugin_requirements.txt` in your netbox-docker directory:
+1. Add to `plugin_requirements.txt`:
 ```bash
 echo "netbox-maintenance-device" >> plugin_requirements.txt
 ```
 
-2. Configure the plugin in `configuration/plugins.py`:
+2. Configure in `configuration/plugins.py`:
 ```python
-PLUGINS = [
-    'netbox_maintenance_device',
-]
+PLUGINS = ['netbox_maintenance_device']
 ```
 
 3. Rebuild and restart:
@@ -65,74 +68,176 @@ docker compose up -d
 docker compose exec netbox python manage.py migrate
 ```
 
-## Usage
+## Configuration
+
+### Basic Configuration
+
+Add the plugin to your NetBox `configuration.py`:
+
+```python
+# configuration.py
+
+PLUGINS = [
+    'netbox_maintenance_device',
+    # ... other plugins
+]
+
+# Optional: Plugin-specific settings
+PLUGINS_CONFIG = {
+    'netbox_maintenance_device': {
+        # Future configuration options will be added here
+        # Currently, the plugin uses default settings
+    }
+}
+```
+
+### Language Configuration (Optional)
+
+To enable Portuguese-BR by default:
+
+```python
+# configuration.py
+
+# Enable internationalization
+USE_I18N = True
+USE_L10N = True
+
+# Set default language
+LANGUAGE_CODE = 'pt-br'
+TIME_ZONE = 'America/Sao_Paulo'
+
+# Available languages
+LANGUAGES = [
+    ('en', 'English'),
+    ('pt-br', 'Português (Brasil)'),
+]
+```
+
+### Database Migration
+
+After configuration, run migrations:
+
+```bash
+python manage.py migrate
+```
+
+### Restart Services
+
+Restart your NetBox services:
+
+```bash
+# For systemd
+sudo systemctl restart netbox netbox-rq
+
+# For Docker
+docker compose restart netbox netbox-worker
+```
+
+## Screenshots
+
+### Device Maintenance Section
+*View maintenance plans and status directly on device pages*
+
+![Device Maintenance](https://via.placeholder.com/800x400/2563eb/ffffff?text=Device+Maintenance+Section)
+
+### Upcoming Maintenance Dashboard
+*Monitor all upcoming and overdue maintenance across your infrastructure*
+
+![Upcoming Maintenance](https://via.placeholder.com/800x400/dc2626/ffffff?text=Upcoming+Maintenance+Dashboard)
+
+### Maintenance Plan Management
+*Create and manage maintenance plans with flexible scheduling*
+
+![Maintenance Plans](https://via.placeholder.com/800x400/059669/ffffff?text=Maintenance+Plan+Management)
+
+### Quick Action Modals
+*Schedule and complete maintenance with one-click actions*
+
+![Quick Actions](https://via.placeholder.com/800x400/7c3aed/ffffff?text=Quick+Action+Modals)
+
+### Portuguese Language Support
+*Complete Portuguese-BR interface for international teams*
+
+![Portuguese Support](https://via.placeholder.com/800x400/ea580c/ffffff?text=Portuguese+Language+Support)
+
+##  Usage
 
 ### Creating Maintenance Plans
 
-1. Navigate to **Plugins > Device Maintenance > Maintenance Plans**
+1. Navigate to **Plugins > Manutenção de Dispositivos > Planos de Manutenção**
 2. Click **Add** to create a new maintenance plan
 3. Select a device, provide a name, and set the frequency in days
 4. Choose between preventive or corrective maintenance type
+5. Save and activate the plan
 
-### Recording Maintenance Executions
+### Scheduling Maintenance
 
-1. Navigate to **Plugins > Device Maintenance > Maintenance Executions**
-2. Click **Add** to record a new maintenance execution
-3. Select the maintenance plan and set the scheduled/completed dates
-4. Update status and add notes as needed
+#### From Device Page:
+1. Go to any device detail page
+2. View the **Maintenance** section
+3. Click the **📅 Schedule** button next to any plan
+4. Set date, technician, and notes
+5. Confirm to create a scheduled execution
 
-### Viewing Device Maintenance
+#### From Upcoming Maintenance:
+1. Navigate to **Plugins > Upcoming Maintenance**
+2. Find the maintenance plan in the table
+3. Click **📅 Schedule** in the Actions column
+4. Complete the scheduling form
 
-On any device detail page, you'll see a **Maintenance** tab showing:
-- Active maintenance plans for the device with visual status indicators
-- Recent maintenance history
-- Next due dates with overdue alerts
-- Quick action buttons to complete maintenance
+### Completing Maintenance
 
-### Monitoring Upcoming Maintenance
+#### Quick Complete:
+1. From the **Upcoming Maintenance** page or device section
+2. Click the **✅ Complete** button for overdue/due maintenance
+3. Add technician notes and confirm
+4. The system creates and marks the execution as completed
 
-Use **Plugins > Device Maintenance > Upcoming Maintenance** to view:
-- All maintenance due within configurable timeframe
-- Overdue maintenance items with prominent alerts
-- Status indicators for quick prioritization
-- One-click completion actions for due/overdue items
+#### Manual Recording:
+1. Navigate to **Plugins > Maintenance Executions**
+2. Click **Add** to record a new execution
+3. Select the plan, set dates, and update status
+4. Add detailed notes and technician information
 
-### Quick Maintenance Completion
+### Monitoring Maintenance
 
-The plugin provides quick action buttons to:
-- Mark maintenance executions as completed
-- Schedule and complete immediate maintenance for overdue plans
-- Add technician notes and completion details
+#### Device-Level Monitoring:
+- **Maintenance Section**: Shows active plans with status badges
+- **Visual Indicators**: Red (overdue), yellow (due soon), green (on track)
+- **Quick Actions**: Schedule and complete buttons for urgent items
 
-### Language Support
-
-The plugin includes full Portuguese-BR translations for:
-- All user interface elements
-- Status messages and alerts
-- Form labels and help text
+#### Dashboard Monitoring:
+- **Upcoming Maintenance**: Centralized view of all maintenance
+- **Status Filters**: Filter by overdue, due soon, or scheduled
+- **Bulk Actions**: Manage multiple maintenance items efficiently
 
 ## Models
 
 ### MaintenancePlan
-- Links to a specific device
-- Defines maintenance type (preventive/corrective)
-- Sets frequency in days
-- Can be activated/deactivated
+- **Device**: Links to a specific NetBox device
+- **Name**: Descriptive name for the maintenance type
+- **Type**: Preventive or corrective maintenance
+- **Frequency**: Maintenance interval in days
+- **Status**: Active/inactive flag
 
-### MaintenanceExecution  
-- Records actual maintenance performed
-- Tracks scheduled vs completed dates
-- Includes status, technician, and notes
-- Links back to the maintenance plan
+### MaintenanceExecution
+- **Plan**: Links to the maintenance plan
+- **Scheduled Date**: When maintenance is scheduled
+- **Completed Date**: When maintenance was completed
+- **Status**: scheduled, in_progress, completed, cancelled
+- **Technician**: Person responsible for maintenance
+- **Notes**: Detailed maintenance notes
 
-## Permissions
 
-The plugin uses standard NetBox permissions:
-- `netbox_maintenance_device.view_maintenanceplan`
-- `netbox_maintenance_device.add_maintenanceplan`
-- `netbox_maintenance_device.change_maintenanceplan`
-- `netbox_maintenance_device.delete_maintenanceplan`
-- `netbox_maintenance_device.view_maintenanceexecution`
-- `netbox_maintenance_device.add_maintenanceexecution`
-- `netbox_maintenance_device.change_maintenanceexecution`
-- `netbox_maintenance_device.delete_maintenanceexecution`
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- NetBox community for the excellent platform
+- Contributors and users providing feedback
