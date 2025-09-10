@@ -1,5 +1,22 @@
 {% load i18n %}
 
+<!-- Maintenance Status Badge -->
+{% if total_active_plans > 0 %}
+    {% if overdue_count > 0 %}
+        <span class="btn btn-sm btn-danger maintenance-status-badge" title="{% trans 'Overdue maintenance items' %}: {{ overdue_count }}">
+            <i class="mdi mdi-alert-circle"></i> {{ overdue_count }}
+        </span>
+    {% elif due_soon_count > 0 %}
+        <span class="btn btn-sm btn-warning maintenance-status-badge" title="{% trans 'Maintenance due soon' %}: {{ due_soon_count }}">
+            <i class="mdi mdi-clock-alert"></i> {{ due_soon_count }}
+        </span>
+    {% else %}
+        <span class="btn btn-sm btn-success maintenance-status-badge" title="{% trans 'All maintenance up to date' %}">
+            <i class="mdi mdi-check-circle"></i> OK
+        </span>
+    {% endif %}
+{% endif %}
+
 {% if perms.netbox_maintenance_device.add_maintenanceexecution %}
 <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_add' %}?device={{ object.pk }}" class="btn btn-sm btn-primary">
     <i class="mdi mdi-wrench" aria-hidden="true"></i> {% trans "Add Execution" %}

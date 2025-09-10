@@ -23,13 +23,25 @@ class DeviceMaintenanceExtension(PluginTemplateExtension):
                 maintenance_plan__device=device
             ).order_by('-scheduled_date')[:5]
             
-            # Count overdue maintenance
-            overdue_count = sum(1 for plan in maintenance_plans if plan.is_overdue())
+            # Count maintenance status
+            overdue_count = 0
+            due_soon_count = 0
+            total_active = 0
+            
+            for plan in maintenance_plans:
+                if plan.is_active:
+                    total_active += 1
+                    if plan.is_overdue():
+                        overdue_count += 1
+                    elif plan.days_until_due and plan.days_until_due <= 7 and plan.days_until_due > 0:
+                        due_soon_count += 1
             
             return {
                 'maintenance_plans': maintenance_plans,
                 'recent_executions': recent_executions,
                 'overdue_count': overdue_count,
+                'due_soon_count': due_soon_count,
+                'total_active_plans': total_active,
             }
         return {}
 
