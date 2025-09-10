@@ -23,9 +23,9 @@
 
 [data-bs-theme="dark"] .table-warning,
 .dark .table-warning {
-    --tblr-table-bg: #e49400 !important;
-    --tblr-table-hover-bg: #e5a700 !important;
-    background-color: #e49400 !important;
+    --tblr-table-bg: #e5a700 !important;
+    --tblr-table-hover-bg: #e49400 !important;
+    background-color: #e5a700 !important;
     color: #ffffff !important;
 }
 
