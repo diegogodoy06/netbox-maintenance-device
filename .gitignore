@@ -48,8 +48,10 @@ coverage.xml
 .pytest_cache/
 
 # Translations
-*.mo
 *.pot
+
+# Allow compiled translation files for the plugin
+!netbox_maintenance_device/locale/*/LC_MESSAGES/django.mo
 
 # Django stuff:
 *.log
@@ -111,5 +113,6 @@ venv.bak/
 
 # NetBox specific
 media/
-static/
+# Allow plugin static files
+!netbox_maintenance_device/static/
 *.pyc
