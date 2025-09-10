@@ -177,5 +177,14 @@ msgstr "Manutenção Próxima"
 msgid "Add"
 msgstr "Adicionar"
 
+msgid "Maintenance Execution"
+msgstr "Execução de Manutenção"
+
+msgid "Device"
+msgstr "Dispositivo"
+
+msgid "Maintenance Plan"
+msgstr "Plano de Manutenção"
+
 msgid "Maintenance Executions"
 msgstr "Execuções de Manutenção"

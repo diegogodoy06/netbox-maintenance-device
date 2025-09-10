@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
 from netbox.forms import NetBoxModelForm
 from dcim.models import Device
 from utilities.forms.fields import DynamicModelChoiceField

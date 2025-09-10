@@ -11,5 +11,9 @@ class MaintenanceDeviceConfig(PluginConfig):
     default_settings = {
         'default_frequency_days': 30,
     }
+    
+    # Translation configuration
+    default_language = 'en'
+    locale_paths = ['locale']
 
 config = MaintenanceDeviceConfig
