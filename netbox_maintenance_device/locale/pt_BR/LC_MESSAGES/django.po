@@ -1,0 +1,181 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Preventive"
+msgstr "Preventiva"
+
+msgid "Corrective"
+msgstr "Corretiva"
+
+msgid "Name"
+msgstr "Nome"
+
+msgid "Description"
+msgstr "Descrição"
+
+msgid "Maintenance Type"
+msgstr "Tipo de Manutenção"
+
+msgid "Frequency in days"
+msgstr "Frequência em dias"
+
+msgid "Frequency (days)"
+msgstr "Frequência (dias)"
+
+msgid "Active"
+msgstr "Ativo"
+
+msgid "Scheduled"
+msgstr "Agendado"
+
+msgid "In Progress"
+msgstr "Em Andamento"
+
+msgid "Completed"
+msgstr "Concluído"
+
+msgid "Cancelled"
+msgstr "Cancelado"
+
+msgid "Scheduled Date"
+msgstr "Data Agendada"
+
+msgid "Completed Date"
+msgstr "Data de Conclusão"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Notes"
+msgstr "Observações"
+
+msgid "Technician"
+msgstr "Técnico"
+
+msgid "Add Maintenance Plan"
+msgstr "Adicionar Plano de Manutenção"
+
+msgid "Add Execution"
+msgstr "Adicionar Execução"
+
+msgid "View Maintenance"
+msgstr "Ver Manutenção"
+
+msgid "Maintenance Plans"
+msgstr "Planos de Manutenção"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "Frequency"
+msgstr "Frequência"
+
+msgid "Next Due"
+msgstr "Próximo Vencimento"
+
+msgid "Actions"
+msgstr "Ações"
+
+msgid "days"
+msgstr "dias"
+
+msgid "Overdue"
+msgstr "Vencido"
+
+msgid "Due Soon"
+msgstr "Vence em Breve"
+
+msgid "Inactive"
+msgstr "Inativo"
+
+msgid "Schedule Immediate Maintenance"
+msgstr "Agendar Manutenção Imediata"
+
+msgid "Schedule"
+msgstr "Agendar"
+
+msgid "No maintenance plans configured for this device."
+msgstr "Nenhum plano de manutenção configurado para este dispositivo."
+
+msgid "Recent Maintenance History"
+msgstr "Histórico Recente de Manutenção"
+
+msgid "Plan"
+msgstr "Plano"
+
+msgid "Mark as Completed"
+msgstr "Marcar como Concluído"
+
+msgid "Complete"
+msgstr "Concluir"
+
+msgid "View all maintenance history"
+msgstr "Ver todo o histórico de manutenção"
+
+msgid "No maintenance executions recorded for this device."
+msgstr "Nenhuma execução de manutenção registrada para este dispositivo."
+
+msgid "Complete Maintenance"
+msgstr "Concluir Manutenção"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Error completing maintenance"
+msgstr "Erro ao concluir manutenção"
+
+msgid "Maintenance execution completed successfully"
+msgstr "Execução de manutenção concluída com sucesso"
+
+msgid "Maintenance scheduled and completed successfully"
+msgstr "Manutenção agendada e concluída com sucesso"
+
+msgid "Missing required parameters"
+msgstr "Parâmetros obrigatórios ausentes"
+
+msgid "Upcoming & Overdue Maintenance"
+msgstr "Manutenções Próximas e Vencidas"
+
+msgid "Attention!"
+msgstr "Atenção!"
+
+#, python-format
+msgid "There is %(counter)d overdue maintenance item that requires immediate attention."
+msgid_plural "There are %(counter)d overdue maintenance items that require immediate attention."
+msgstr[0] "Há %(counter)d item de manutenção vencido que requer atenção imediata."
+msgstr[1] "Há %(counter)d itens de manutenção vencidos que requerem atenção imediata."
+
+msgid "No upcoming or overdue maintenance found."
+msgstr "Nenhuma manutenção próxima ou vencida encontrada."
+
+msgid "Processing..."
+msgstr "Processando..."
+
+msgid "Error completing maintenance. Please try again."
+msgstr "Erro ao concluir manutenção. Tente novamente."
+
+msgid "Upcoming Maintenance"
+msgstr "Manutenção Próxima"
+
+msgid "Add"
+msgstr "Adicionar"
+
+msgid "Maintenance Executions"
+msgstr "Execuções de Manutenção"
