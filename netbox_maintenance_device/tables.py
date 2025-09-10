@@ -107,7 +107,8 @@ class UpcomingMaintenanceTable(NetBoxTable):
         return format_html('<span class="badge badge-success">On Track</span>')
     
     def render_actions(self, record):
-        if record.is_overdue() or (record.days_until_due() is not None and record.days_until_due() <= 7):
+        days_until = record.days_until_due()
+        if record.is_overdue() or (days_until is not None and days_until <= 7):
             return format_html(
                 '<button class="btn btn-sm btn-success quick-complete-btn" '
                 'data-plan-id="{}" data-device-id="{}" data-plan-name="{}" '

@@ -33,8 +33,10 @@ class DeviceMaintenanceExtension(PluginTemplateExtension):
                     total_active += 1
                     if plan.is_overdue():
                         overdue_count += 1
-                    elif plan.days_until_due and plan.days_until_due <= 7 and plan.days_until_due > 0:
-                        due_soon_count += 1
+                    else:
+                        days_until = plan.days_until_due()
+                        if days_until and days_until <= 7 and days_until > 0:
+                            due_soon_count += 1
             
             return {
                 'maintenance_plans': maintenance_plans,
