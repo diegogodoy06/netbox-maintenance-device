@@ -2,10 +2,11 @@ from netbox.plugins import PluginConfig
 
 class MaintenanceDeviceConfig(PluginConfig):
     name = 'netbox_maintenance_device'
-    verbose_name = 'Device Maintenance'
+    verbose_name = 'Manutenção de Dispositivos'
     description = 'Manage device preventive and corrective maintenance with Portuguese-BR support'
     version = '1.1.0'
     base_url = 'maintenance-device'
+    icon = 'mdi-wrench-cog'
     
     # Default configurations
     default_settings = {

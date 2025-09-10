@@ -12,17 +12,32 @@
     border-left: 4px solid #ffc107 !important;
 }
 
-/* Dark mode specific overrides */
+/* Dark mode specific overrides - Force override NetBox variables */
 [data-bs-theme="dark"] .table-danger,
 .dark .table-danger {
-    background-color: rgb(92 0 8) !important;
+    --tblr-table-bg: rgb(92, 0, 8) !important;
+    background-color: rgb(92, 0, 8) !important;
     color: #ffffff !important;
 }
 
 [data-bs-theme="dark"] .table-warning,
 .dark .table-warning {
-    background-color: rgb(161 123 10) !important;
+    --tblr-table-bg: rgb(161, 123, 10) !important;
+    background-color: rgb(161, 123, 10) !important;
     color: #ffffff !important;
+}
+
+/* Dark mode hover states */
+[data-bs-theme="dark"] .table-danger:hover,
+.dark .table-danger:hover {
+    --tblr-table-bg: rgb(115, 0, 10) !important;
+    background-color: rgb(115, 0, 10) !important;
+}
+
+[data-bs-theme="dark"] .table-warning:hover,
+.dark .table-warning:hover {
+    --tblr-table-bg: rgb(185, 140, 12) !important;
+    background-color: rgb(185, 140, 12) !important;
 }
 
 /* Ensure text is always readable */
@@ -34,6 +49,42 @@
 .table-warning td,
 .table-warning th {
     color: inherit !important;
+}
+
+/* Force dark mode table cells */
+[data-bs-theme="dark"] .table-danger td,
+[data-bs-theme="dark"] .table-danger th,
+.dark .table-danger td,
+.dark .table-danger th {
+    --tblr-table-bg: rgb(92, 0, 8) !important;
+    background-color: rgb(92, 0, 8) !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .table-warning td,
+[data-bs-theme="dark"] .table-warning th,
+.dark .table-warning td,
+.dark .table-warning th {
+    --tblr-table-bg: rgb(161, 123, 10) !important;
+    background-color: rgb(161, 123, 10) !important;
+    color: #ffffff !important;
+}
+
+/* Dark mode hover for table cells */
+[data-bs-theme="dark"] .table-danger:hover td,
+[data-bs-theme="dark"] .table-danger:hover th,
+.dark .table-danger:hover td,
+.dark .table-danger:hover th {
+    --tblr-table-bg: rgb(115, 0, 10) !important;
+    background-color: rgb(115, 0, 10) !important;
+}
+
+[data-bs-theme="dark"] .table-warning:hover td,
+[data-bs-theme="dark"] .table-warning:hover th,
+.dark .table-warning:hover td,
+.dark .table-warning:hover th {
+    --tblr-table-bg: rgb(185, 140, 12) !important;
+    background-color: rgb(185, 140, 12) !important;
 }
 
 @keyframes pulse-danger {
@@ -49,6 +100,28 @@
         background-color: rgba(220, 53, 69, 0.15);
         border-left-color: #dc3545;
     }
+}
+
+/* Dark mode pulse animation */
+@keyframes pulse-danger-dark {
+    0% {
+        background-color: rgb(92, 0, 8);
+        --tblr-table-bg: rgb(92, 0, 8) !important;
+    }
+    50% {
+        background-color: rgb(115, 0, 10);
+        --tblr-table-bg: rgb(115, 0, 10) !important;
+    }
+    100% {
+        background-color: rgb(92, 0, 8);
+        --tblr-table-bg: rgb(92, 0, 8) !important;
+    }
+}
+
+/* Apply dark mode animation */
+[data-bs-theme="dark"] .table-danger,
+.dark .table-danger {
+    animation: pulse-danger-dark 2s infinite;
 }
 
 /* Alert enhancements */
