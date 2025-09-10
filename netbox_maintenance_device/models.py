@@ -17,7 +17,8 @@ class MaintenancePlan(NetBoxModel):
     device = models.ForeignKey(
         Device,
         on_delete=models.CASCADE,
-        related_name='maintenance_plans'
+        related_name='maintenance_plans',
+        verbose_name=_('Device')
     )
     name = models.CharField(max_length=100, verbose_name=_('Name'))
     description = models.TextField(blank=True, verbose_name=_('Description'))
@@ -36,6 +37,8 @@ class MaintenancePlan(NetBoxModel):
     class Meta:
         ordering = ['device', 'name']
         unique_together = ['device', 'name']
+        verbose_name = _('Maintenance Plan')
+        verbose_name_plural = _('Maintenance Plans')
     
     def __str__(self):
         return f"{self.device.name} - {self.name}"
@@ -82,7 +85,8 @@ class MaintenanceExecution(NetBoxModel):
     maintenance_plan = models.ForeignKey(
         MaintenancePlan,
         on_delete=models.CASCADE,
-        related_name='executions'
+        related_name='executions',
+        verbose_name=_('Plan')
     )
     scheduled_date = models.DateTimeField(verbose_name=_('Scheduled Date'))
     completed_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Completed Date'))
@@ -98,6 +102,8 @@ class MaintenanceExecution(NetBoxModel):
     
     class Meta:
         ordering = ['-scheduled_date']
+        verbose_name = _('Maintenance Execution')
+        verbose_name_plural = _('Maintenance Executions')
     
     def __str__(self):
         return f"{self.maintenance_plan} - {self.scheduled_date.strftime('%Y-%m-%d')}"
