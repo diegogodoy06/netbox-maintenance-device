@@ -1,24 +1,53 @@
 /* NetBox Maintenance Device Plugin Styles */
 
-/* Enhanced overdue maintenance styling */
+/* Enhanced overdue maintenance styling - Works in both light and dark mode */
 .table-danger {
-    background-color: #f8d7da !important;
+    background-color: rgba(220, 53, 69, 0.15) !important;
+    border-left: 4px solid #dc3545 !important;
     animation: pulse-danger 2s infinite;
 }
 
 .table-warning {
-    background-color: #fff3cd !important;
+    background-color: rgba(255, 193, 7, 0.15) !important;
+    border-left: 4px solid #ffc107 !important;
+}
+
+/* Dark mode specific overrides */
+[data-bs-theme="dark"] .table-danger,
+.dark .table-danger {
+    background-color: rgba(220, 53, 69, 0.25) !important;
+    color: #ff6b6b !important;
+}
+
+[data-bs-theme="dark"] .table-warning,
+.dark .table-warning {
+    background-color: rgba(255, 193, 7, 0.25) !important;
+    color: #ffd43b !important;
+}
+
+/* Ensure text is always readable */
+.table-danger td,
+.table-danger th {
+    color: inherit !important;
+}
+
+.table-warning td,
+.table-warning th {
+    color: inherit !important;
 }
 
 @keyframes pulse-danger {
     0% {
-        background-color: #f8d7da;
+        background-color: rgba(220, 53, 69, 0.15);
+        border-left-color: #dc3545;
     }
     50% {
-        background-color: #f5c6cb;
+        background-color: rgba(220, 53, 69, 0.25);
+        border-left-color: #c82333;
     }
     100% {
-        background-color: #f8d7da;
+        background-color: rgba(220, 53, 69, 0.15);
+        border-left-color: #dc3545;
     }
 }
 
@@ -35,9 +64,38 @@
     border-left: 4px solid #17a2b8;
 }
 
-/* Badge enhancements */
+/* Badge enhancements - Better contrast for dark mode */
 .badge-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
     animation: blink-danger 1.5s infinite;
+}
+
+.badge-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.badge-success {
+    background-color: #28a745 !important;
+    color: #fff !important;
+}
+
+.badge-info {
+    background-color: #17a2b8 !important;
+    color: #fff !important;
+}
+
+.badge-secondary {
+    background-color: #6c757d !important;
+    color: #fff !important;
+}
+
+/* Dark mode badge adjustments */
+[data-bs-theme="dark"] .badge-warning,
+.dark .badge-warning {
+    background-color: #e0a800 !important;
+    color: #fff !important;
 }
 
 @keyframes blink-danger {
@@ -114,4 +172,38 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Additional dark mode improvements */
+[data-bs-theme="dark"] .card,
+.dark .card {
+    border-color: rgba(255, 255, 255, 0.125);
+}
+
+[data-bs-theme="dark"] .table,
+.dark .table {
+    color: inherit;
+}
+
+[data-bs-theme="dark"] .table th,
+.dark .table th {
+    border-color: rgba(255, 255, 255, 0.125);
+    color: inherit;
+}
+
+[data-bs-theme="dark"] .table td,
+.dark .table td {
+    border-color: rgba(255, 255, 255, 0.125);
+    color: inherit;
+}
+
+/* Better text contrast in maintenance cards */
+.maintenance-card-danger {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+    border-left: 4px solid #dc3545;
+}
+
+.maintenance-card-warning {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+    border-left: 4px solid #ffc107;
 }
