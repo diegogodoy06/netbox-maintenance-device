@@ -6,10 +6,13 @@ A NetBox plugin for managing device preventive and corrective maintenance.
 
 - **Maintenance Plans**: Create maintenance plans for devices with configurable frequency
 - **Maintenance Executions**: Record and track maintenance executions
-- **Device Integration**: View maintenance history directly on device pages
-- **Dashboard**: Monitor upcoming and overdue maintenance
+- **Device Integration**: View maintenance history directly on device pages with dedicated maintenance tab
+- **Dashboard**: Monitor upcoming and overdue maintenance with enhanced visual alerts
 - **Types**: Support for both preventive and corrective maintenance
 - **Status Tracking**: Track maintenance status from scheduled to completed
+- **Quick Actions**: Complete maintenance executions directly from upcoming view and device tab
+- **Internationalization**: Full Portuguese-BR language support
+- **Enhanced UI**: Eye-catching visual indicators for overdue maintenance
 
 ## Installation
 
@@ -108,17 +111,33 @@ docker compose exec netbox python manage.py migrate
 
 ### Viewing Device Maintenance
 
-On any device detail page, you'll see a **Maintenance** section showing:
-- Active maintenance plans for the device
+On any device detail page, you'll see a **Maintenance** tab showing:
+- Active maintenance plans for the device with visual status indicators
 - Recent maintenance history
-- Next due dates and status indicators
+- Next due dates with overdue alerts
+- Quick action buttons to complete maintenance
 
 ### Monitoring Upcoming Maintenance
 
 Use **Plugins > Device Maintenance > Upcoming Maintenance** to view:
-- All maintenance due within 30 days
-- Overdue maintenance items
+- All maintenance due within configurable timeframe
+- Overdue maintenance items with prominent alerts
 - Status indicators for quick prioritization
+- One-click completion actions for due/overdue items
+
+### Quick Maintenance Completion
+
+The plugin provides quick action buttons to:
+- Mark maintenance executions as completed
+- Schedule and complete immediate maintenance for overdue plans
+- Add technician notes and completion details
+
+### Language Support
+
+The plugin includes full Portuguese-BR translations for:
+- All user interface elements
+- Status messages and alerts
+- Form labels and help text
 
 ## Models
 

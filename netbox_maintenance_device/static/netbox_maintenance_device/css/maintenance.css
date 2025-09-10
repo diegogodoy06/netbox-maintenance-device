@@ -1,0 +1,117 @@
+/* NetBox Maintenance Device Plugin Styles */
+
+/* Enhanced overdue maintenance styling */
+.table-danger {
+    background-color: #f8d7da !important;
+    animation: pulse-danger 2s infinite;
+}
+
+.table-warning {
+    background-color: #fff3cd !important;
+}
+
+@keyframes pulse-danger {
+    0% {
+        background-color: #f8d7da;
+    }
+    50% {
+        background-color: #f5c6cb;
+    }
+    100% {
+        background-color: #f8d7da;
+    }
+}
+
+/* Alert enhancements */
+.alert-danger {
+    border-left: 4px solid #dc3545;
+}
+
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.alert-info {
+    border-left: 4px solid #17a2b8;
+}
+
+/* Badge enhancements */
+.badge-danger {
+    animation: blink-danger 1.5s infinite;
+}
+
+@keyframes blink-danger {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.7;
+    }
+}
+
+/* Quick action button styling */
+.quick-complete-btn, .complete-execution {
+    transition: all 0.3s ease;
+}
+
+.quick-complete-btn:hover, .complete-execution:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Modal enhancements */
+.modal-header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+}
+
+.modal-header .close {
+    color: white;
+    opacity: 0.8;
+}
+
+/* Icon animations */
+.mdi-alert-circle, .mdi-clock-alert {
+    animation: shake 1s infinite;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-2px);
+    }
+    75% {
+        transform: translateX(2px);
+    }
+}
+
+/* Card header icons */
+.card-header i {
+    margin-right: 8px;
+}
+
+/* Enhanced button states */
+.btn-success.quick-complete {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+}
+
+.btn-success.quick-complete:hover {
+    background: linear-gradient(135deg, #20c997, #17a2b8);
+}
+
+/* Loading spinner animation */
+.mdi-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
