@@ -1,6 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from datetime import timedelta
 from netbox.models import NetBoxModel
 from dcim.models import Device
@@ -9,8 +10,8 @@ class MaintenancePlan(NetBoxModel):
     """Maintenance plan for a device with frequency and type"""
     
     MAINTENANCE_TYPE_CHOICES = [
-        ('preventive', 'Preventive'),
-        ('corrective', 'Corrective'),
+        ('preventive', _('Preventive')),
+        ('corrective', _('Corrective')),
     ]
     
     device = models.ForeignKey(
@@ -18,17 +19,19 @@ class MaintenancePlan(NetBoxModel):
         on_delete=models.CASCADE,
         related_name='maintenance_plans'
     )
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    name = models.CharField(max_length=100, verbose_name=_('Name'))
+    description = models.TextField(blank=True, verbose_name=_('Description'))
     maintenance_type = models.CharField(
         max_length=20,
         choices=MAINTENANCE_TYPE_CHOICES,
-        default='preventive'
+        default='preventive',
+        verbose_name=_('Maintenance Type')
     )
     frequency_days = models.PositiveIntegerField(
-        help_text="Frequency in days"
+        help_text=_("Frequency in days"),
+        verbose_name=_('Frequency (days)')
     )
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     
     class Meta:
         ordering = ['device', 'name']
@@ -70,10 +73,10 @@ class MaintenanceExecution(NetBoxModel):
     """Record of maintenance execution"""
     
     STATUS_CHOICES = [
-        ('scheduled', 'Scheduled'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
+        ('scheduled', _('Scheduled')),
+        ('in_progress', _('In Progress')),
+        ('completed', _('Completed')),
+        ('cancelled', _('Cancelled')),
     ]
     
     maintenance_plan = models.ForeignKey(
@@ -81,16 +84,17 @@ class MaintenanceExecution(NetBoxModel):
         on_delete=models.CASCADE,
         related_name='executions'
     )
-    scheduled_date = models.DateTimeField()
-    completed_date = models.DateTimeField(null=True, blank=True)
+    scheduled_date = models.DateTimeField(verbose_name=_('Scheduled Date'))
+    completed_date = models.DateTimeField(null=True, blank=True, verbose_name=_('Completed Date'))
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='scheduled'
+        default='scheduled',
+        verbose_name=_('Status')
     )
-    notes = models.TextField(blank=True)
-    technician = models.CharField(max_length=100, blank=True)
-    completed = models.BooleanField(default=False)
+    notes = models.TextField(blank=True, verbose_name=_('Notes'))
+    technician = models.CharField(max_length=100, blank=True, verbose_name=_('Technician'))
+    completed = models.BooleanField(default=False, verbose_name=_('Completed'))
     
     class Meta:
         ordering = ['-scheduled_date']
