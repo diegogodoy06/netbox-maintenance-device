@@ -28,6 +28,11 @@ class MaintenancePlanDeleteView(generic.ObjectDeleteView):
 
 class MaintenancePlanChangeLogView(generic.ObjectChangeLogView):
     queryset = models.MaintenancePlan.objects.all()
+    
+    def get_extra_context(self, request, instance):
+        return {
+            'model': models.MaintenancePlan,
+        }
 
 
 class MaintenanceExecutionListView(generic.ObjectListView):
@@ -51,6 +56,11 @@ class MaintenanceExecutionDeleteView(generic.ObjectDeleteView):
 
 class MaintenanceExecutionChangeLogView(generic.ObjectChangeLogView):
     queryset = models.MaintenanceExecution.objects.all()
+    
+    def get_extra_context(self, request, instance):
+        return {
+            'model': models.MaintenanceExecution,
+        }
 
 
 class UpcomingMaintenanceView(generic.ObjectListView):
@@ -60,20 +70,12 @@ class UpcomingMaintenanceView(generic.ObjectListView):
     template_name = 'netbox_maintenance_device/upcoming_maintenance.html'
     
     def get_queryset(self, request):
-        # Get all active maintenance plans and calculate next dates
+        # Get all active maintenance plans
         queryset = super().get_queryset(request)
         
-        # Filter for upcoming or overdue maintenance
-        upcoming = []
-        for plan in queryset:
-            next_date = plan.get_next_maintenance_date()
-            if next_date:
-                days_until = plan.days_until_due()
-                # Show if due within 30 days or overdue
-                if days_until is not None and days_until <= 30:
-                    upcoming.append(plan.pk)
-        
-        return queryset.filter(pk__in=upcoming)
+        # For now, show all active plans
+        # TODO: Implement proper upcoming logic
+        return queryset
 
 
 def device_maintenance_tab(request, pk):
