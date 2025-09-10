@@ -3,7 +3,7 @@
 /* Enhanced overdue maintenance styling - Works in both light and dark mode */
 .table-danger {
     background-color: rgba(220, 53, 69, 0.15) !important;
-    border-left: 4px solid #dc3545 !important;
+    border-left: 4px solid #ae0011 !important;
     animation: pulse-danger 2s infinite;
 }
 
@@ -15,14 +15,14 @@
 /* Dark mode specific overrides */
 [data-bs-theme="dark"] .table-danger,
 .dark .table-danger {
-    background-color: rgba(220, 53, 69, 0.25) !important;
-    color: #ff6b6b !important;
+    background-color: rgb(92 0 8) !important;
+    color: #ffffff !important;
 }
 
 [data-bs-theme="dark"] .table-warning,
 .dark .table-warning {
-    background-color: rgba(255, 193, 7, 0.25) !important;
-    color: #ffd43b !important;
+    background-color: rgb(161 123 10) !important;
+    color: #ffffff !important;
 }
 
 /* Ensure text is always readable */
