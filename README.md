@@ -7,6 +7,8 @@
 
 A comprehensive NetBox plugin for managing device preventive and corrective maintenance with enhanced visual indicators, scheduling capabilities, and multi-language support.
 
+![Upcoming & Overdue Maintenance](https://github.com/diegogodoy06/netbox-maintenance-device/blob/main/docs/img/Upcoming.png?raw=true)
+
 ## Features
 
 - **Maintenance Plans**: Create and manage maintenance plans for devices with configurable frequency
@@ -138,27 +140,18 @@ docker compose restart netbox netbox-worker
 ### Device Maintenance Section
 *View maintenance plans and status directly on device pages*
 
-![Device Maintenance](https://via.placeholder.com/800x400/2563eb/ffffff?text=Device+Maintenance+Section)
+![Device Maintenance](https://github.com/diegogodoy06/netbox-maintenance-device/blob/main/docs/img/device.png?raw=true)
 
 ### Upcoming Maintenance Dashboard
 *Monitor all upcoming and overdue maintenance across your infrastructure*
 
-![Upcoming Maintenance](https://via.placeholder.com/800x400/dc2626/ffffff?text=Upcoming+Maintenance+Dashboard)
+![Upcoming Maintenance](https://github.com/diegogodoy06/netbox-maintenance-device/blob/main/docs/img/Upcoming.png?raw=true)
 
 ### Maintenance Plan Management
 *Create and manage maintenance plans with flexible scheduling*
 
-![Maintenance Plans](https://via.placeholder.com/800x400/059669/ffffff?text=Maintenance+Plan+Management)
+![Maintenance Plans](https://github.com/diegogodoy06/netbox-maintenance-device/blob/main/docs/img/Plans.png?raw=true)
 
-### Quick Action Modals
-*Schedule and complete maintenance with one-click actions*
-
-![Quick Actions](https://via.placeholder.com/800x400/7c3aed/ffffff?text=Quick+Action+Modals)
-
-### Portuguese Language Support
-*Complete Portuguese-BR interface for international teams*
-
-![Portuguese Support](https://via.placeholder.com/800x400/ea580c/ffffff?text=Portuguese+Language+Support)
 
 ##  Usage
 
