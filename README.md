@@ -19,14 +19,14 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 
 ## Compatibility
 
-| NetBox Version | Plugin Support | Status |
-|----------------|----------------|---------|
-| 4.3.x | ✅ | Full Support |
-| 4.2.x | ✅ | Full Support |
-| 4.1.x | ✅ | Full Support |
-| 4.4.x | ✅ | Full Support |
-| 4.0.x | ✅ | Full Support |
-| 3.x | ❌ | Not Supported |
+| NetBox Version | Plugin Support |
+|----------------|----------------|
+| 4.3.x | ✅ |
+| 4.2.x | ✅ |
+| 4.1.x | ✅ |
+| 4.4.x | ✅ |
+| 4.0.x | ✅ |
+| 3.x | ❌ |
 
 
 
