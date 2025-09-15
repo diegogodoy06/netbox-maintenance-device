@@ -54,7 +54,7 @@ For Docker-based NetBox installations using [netbox-docker](https://github.com/n
 
 1. Add to `plugin_requirements.txt`:
 ```bash
-echo "netbox-maintenance-device" >> plugin_requirements.txt
+echo "https://github.com/diegogodoy06/netbox-maintenance-device/archive/main.tar.gz" >> plugin_requirements.txt
 ```
 
 2. Configure in `configuration/plugins.py`:
