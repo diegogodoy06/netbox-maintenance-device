@@ -1,8 +1,17 @@
 from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer, WritableNestedSerializer
-from dcim.api.serializers import NestedDeviceSerializer
 from netbox_maintenance_device import models
 from django.utils import timezone
+
+
+class DeviceNestedSerializer(WritableNestedSerializer):
+    """Nested serializer for Device references - NetBox 4.4.x compatible"""
+    
+    class Meta:
+        # Import Device model at class level
+        from dcim import models as dcim_models
+        model = dcim_models.Device
+        fields = ['id', 'url', 'display', 'name']
 
 
 class NestedMaintenancePlanSerializer(WritableNestedSerializer):
@@ -35,7 +44,7 @@ class MaintenancePlanSerializer(NetBoxModelSerializer):
     )
     
     # Nested relationships
-    device = NestedDeviceSerializer()
+    device = DeviceNestedSerializer()
     executions = NestedMaintenanceExecutionSerializer(many=True, read_only=True)
     
     # Computed fields
