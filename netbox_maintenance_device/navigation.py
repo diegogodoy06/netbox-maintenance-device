@@ -3,9 +3,9 @@ from django.utils.translation import gettext_lazy as _
 
 # Criar menu customizado ao invés de usar o menu padrão "Plugins"
 menu = PluginMenu(
-    label=_('Manutenção de Dispositivos'),
+    label=_('Device Maintenance'),
     groups=(
-        (_('Manutenção'), (
+        (_('Maintenance'), (
             PluginMenuItem(
                 link='plugins:netbox_maintenance_device:upcoming_maintenance',
                 link_text=_('Upcoming Maintenance'),
