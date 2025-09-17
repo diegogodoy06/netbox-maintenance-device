@@ -14,6 +14,10 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 - **Maintenance Executions**: Record and track maintenance executions with status monitoring
 - **Device Integration**: View maintenance history directly on device pages with dedicated tabs
 - **Quick Actions**: Schedule and complete maintenance directly from the interface
+- **🆕 REST API**: Complete REST API for external integrations and automation
+- **Advanced Filtering**: Powerful filtering and search capabilities
+- **Custom Actions**: Schedule, complete, and cancel maintenance via API
+- **Statistics**: Get maintenance statistics and overdue/upcoming reports
 
 
 ## Compatibility
@@ -219,6 +223,57 @@ docker compose restart netbox netbox-worker
 - **Status**: scheduled, in_progress, completed, cancelled
 - **Technician**: Person responsible for maintenance
 - **Notes**: Detailed maintenance notes
+
+
+## 🔌 API Integration
+
+The plugin provides a complete REST API for external integration and automation. Perfect for:
+
+- **Monitoring Systems**: Integrate with Zabbix, Nagios, Prometheus
+- **Automation**: Schedule maintenance via scripts and workflows  
+- **ITSM Integration**: Connect with ServiceNow, Jira Service Management
+- **Custom Applications**: Build maintenance dashboards and tools
+
+### Quick API Examples
+
+```bash
+# Get all overdue maintenance plans
+curl -H "Authorization: Token your-api-token" \
+  "https://netbox.example.com/api/plugins/netbox-maintenance-device/maintenance-plans/overdue/"
+
+# Schedule maintenance
+curl -X POST -H "Authorization: Token your-api-token" \
+  -H "Content-Type: application/json" \
+  -d '{"scheduled_date": "2025-10-20T09:00:00Z", "technician": "John Doe"}' \
+  "https://netbox.example.com/api/plugins/netbox-maintenance-device/maintenance-plans/1/schedule-maintenance/"
+
+# Get maintenance statistics
+curl -H "Authorization: Token your-api-token" \
+  "https://netbox.example.com/api/plugins/netbox-maintenance-device/maintenance-plans/statistics/"
+```
+
+### Available Endpoints
+
+| Endpoint | Operations | Description |
+|----------|------------|-------------|
+| `/maintenance-plans/` | CRUD + Custom Actions | Manage maintenance plans |
+| `/maintenance-executions/` | CRUD + Custom Actions | Manage maintenance executions |
+| `/maintenance-plans/overdue/` | GET | Get overdue plans |
+| `/maintenance-plans/upcoming/` | GET | Get upcoming plans |
+| `/maintenance-plans/statistics/` | GET | Get plan statistics |
+| `/maintenance-executions/pending/` | GET | Get pending executions |
+
+📖 **[Complete API Documentation](API_DOCUMENTATION.md)**
+
+### Integration Capabilities
+
+- **✅ Full CRUD Operations**: Create, read, update, delete
+- **✅ Advanced Filtering**: Filter by device, type, status, dates
+- **✅ Custom Actions**: Schedule, complete, cancel maintenance
+- **✅ Bulk Operations**: Handle multiple records efficiently
+- **✅ Statistics & Reports**: Get overdue/upcoming maintenance data
+- **✅ NetBox Authentication**: Uses NetBox token authentication
+- **✅ Permission Control**: Granular permission management
 
 
 ## 🤝 Contributing
