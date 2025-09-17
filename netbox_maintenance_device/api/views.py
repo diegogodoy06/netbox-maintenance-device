@@ -8,7 +8,6 @@ from rest_framework.permissions import IsAuthenticated
 
 from netbox.api.viewsets import NetBoxModelViewSet
 from netbox.api.pagination import OptionalLimitOffsetPagination
-from utilities.utils import count_related
 
 from netbox_maintenance_device import models
 from .serializers import (
@@ -18,8 +17,7 @@ from .serializers import (
     NestedMaintenanceExecutionSerializer
 )
 from .permissions import (
-    MaintenancePlanPermissions,
-    MaintenanceExecutionPermissions,
+    MaintenanceDevicePermissions,
     CanScheduleMaintenance,
     CanCompleteMaintenance
 )
@@ -214,7 +212,7 @@ class MaintenancePlanViewSet(NetBoxModelViewSet):
     )
     serializer_class = MaintenancePlanSerializer
     filterset_class = MaintenancePlanFilter
-    permission_classes = [MaintenancePlanPermissions]
+    permission_classes = [MaintenanceDevicePermissions]
     
     # Ordering options
     ordering_fields = [
@@ -336,7 +334,7 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
     ).prefetch_related('tags')
     serializer_class = MaintenanceExecutionSerializer
     filterset_class = MaintenanceExecutionFilter
-    permission_classes = [MaintenanceExecutionPermissions]
+    permission_classes = [MaintenanceDevicePermissions]
     
     # Ordering options
     ordering_fields = [
