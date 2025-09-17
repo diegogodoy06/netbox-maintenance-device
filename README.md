@@ -2,7 +2,6 @@
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![NetBox](https://img.shields.io/badge/NetBox-4.0%2B-orange)](https://netbox.dev/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Language](https://img.shields.io/badge/Language-EN%20%7C%20PT--BR-brightgreen)](README.md)
 
 A comprehensive NetBox plugin for managing device preventive and corrective maintenance with enhanced visual indicators, scheduling capabilities, and multi-language support.
@@ -21,10 +20,10 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 
 | NetBox Version | Plugin Support |
 |----------------|----------------|
+| 4.4.x | ✅ |
 | 4.3.x | ✅ |
 | 4.2.x | ✅ |
 | 4.1.x | ✅ |
-| 4.4.x | ✅ |
 | 4.0.x | ✅ |
 | 3.x | ❌ |
 

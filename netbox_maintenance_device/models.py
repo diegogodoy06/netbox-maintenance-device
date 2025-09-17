@@ -6,6 +6,36 @@ from datetime import timedelta
 from netbox.models import NetBoxModel
 from dcim.models import Device
 
+
+class MaintenanceDeviceManager(models.Manager):
+    """Custom manager for maintenance models with integrity checks."""
+    
+    def safe_operations_check(self):
+        """
+        Check if database operations are safe by detecting orphaned tables.
+        
+        Returns:
+            bool: True if operations are safe, False if issues detected
+        """
+        from django.db import connection
+        
+        try:
+            with connection.cursor() as cursor:
+                # Try to detect the problematic orphaned table
+                try:
+                    cursor.execute(
+                        "SELECT 1 FROM netbox_maintenance_device_maintenancenotification LIMIT 1;"
+                    )
+                    # If this succeeds, we have the orphaned table
+                    return False
+                except Exception:
+                    # If this fails, the orphaned table doesn't exist (good)
+                    return True
+        except Exception:
+            # If we can't check, assume it's safe
+            return True
+
+
 class MaintenancePlan(NetBoxModel):
     """Maintenance plan for a device with frequency and type"""
     
@@ -34,6 +64,9 @@ class MaintenancePlan(NetBoxModel):
     )
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     
+    # Use custom manager
+    objects = MaintenanceDeviceManager()
+    
     class Meta:
         ordering = ['device', 'name']
         unique_together = ['device', 'name']
@@ -45,6 +78,32 @@ class MaintenancePlan(NetBoxModel):
     
     def get_absolute_url(self):
         return reverse('plugins:netbox_maintenance_device:maintenanceplan', args=[self.pk])
+    
+    def save(self, *args, **kwargs):
+        """Override save to include safety checks."""
+        # Check if database operations are safe
+        if not self.__class__.objects.safe_operations_check():
+            # Try to auto-heal before proceeding
+            try:
+                from .database_healer import auto_heal_database
+                auto_heal_database()
+            except Exception:
+                pass  # Continue with save even if auto-heal fails
+        
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        """Override delete to include safety checks."""
+        # Check if database operations are safe
+        if not self.__class__.objects.safe_operations_check():
+            # Try to auto-heal before proceeding
+            try:
+                from .database_healer import auto_heal_database
+                auto_heal_database()
+            except Exception:
+                pass  # Continue with delete even if auto-heal fails
+        
+        super().delete(*args, **kwargs)
     
     def get_next_maintenance_date(self):
         """Calculate next maintenance date based on last execution"""
@@ -99,6 +158,9 @@ class MaintenanceExecution(NetBoxModel):
     notes = models.TextField(blank=True, verbose_name=_('Notes'))
     technician = models.CharField(max_length=100, blank=True, verbose_name=_('Technician'))
     completed = models.BooleanField(default=False, verbose_name=_('Completed'))
+    
+    # Use custom manager
+    objects = MaintenanceDeviceManager()
     
     class Meta:
         ordering = ['-scheduled_date']
