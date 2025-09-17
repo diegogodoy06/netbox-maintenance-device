@@ -232,10 +232,7 @@ msgstr "Plano de Manutenção"
 msgid "Device Maintenance"
 msgstr "Manutenção de Dispositivos"
 
-msgid "Manutenção de Dispositivos"
-msgstr "Manutenção de Dispositivos"
-
-msgid "Manutenção"
+msgid "Maintenance"
 msgstr "Manutenção"
 
 msgid "Maintenance Executions"
@@ -249,3 +246,6 @@ msgstr "Agendado"
 
 msgid "Completed"
 msgstr "Concluído"
+
+msgid "NetBox Device Maintenance"
+msgstr "NetBox Manutenção de Dispositivos"

@@ -5,8 +5,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='netbox_maintenance_device',
-    version='1.2.0',
-    description='NetBox plugin for device maintenance management with Portuguese-BR support',
+    version='1.2.1',
+    description='NetBox plugin for device maintenance management with comprehensive REST API and Portuguese-BR support',
     long_description=long_description,
     long_description_content_type="text/markdown",
     author='Diego Godoy',
@@ -18,7 +18,7 @@ setup(
         'Documentation': 'https://github.com/diegogodoy06/netbox-maintenance-device/blob/main/README.md',
     },
     license='Apache 2.0',
-    keywords=['netbox', 'plugin', 'maintenance', 'device', 'preventive', 'corrective'],
+    keywords=['netbox', 'plugin', 'maintenance', 'device', 'preventive', 'corrective', 'api', 'rest', 'automation'],
     install_requires=[
         # NetBox já inclui django-filter e django-tables2
         # Adicione apenas dependências específicas do seu plugin se necessário

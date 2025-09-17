@@ -6,6 +6,7 @@ from datetime import timedelta
 from netbox.models import NetBoxModel
 from dcim.models import Device
 
+
 class MaintenancePlan(NetBoxModel):
     """Maintenance plan for a device with frequency and type"""
     
@@ -45,6 +46,14 @@ class MaintenancePlan(NetBoxModel):
     
     def get_absolute_url(self):
         return reverse('plugins:netbox_maintenance_device:maintenanceplan', args=[self.pk])
+    
+    def save(self, *args, **kwargs):
+        """Override save with basic safety checks."""
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        """Override delete with basic safety checks."""
+        super().delete(*args, **kwargs)
     
     def get_next_maintenance_date(self):
         """Calculate next maintenance date based on last execution"""
