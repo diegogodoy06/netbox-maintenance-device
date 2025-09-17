@@ -13,9 +13,17 @@ def cleanup_orphaned_notification_table(apps, schema_editor):
     table and its constraints that prevent MaintenancePlan operations.
     """
     from django.db import connection
+    import logging
     
-    with connection.cursor() as cursor:
-        try:
+    logger = logging.getLogger('netbox_maintenance_device')
+    
+    # Skip cleanup during collectstatic or other operations that don't need database access
+    if connection.settings_dict.get('NAME') == ':memory:':
+        logger.info("NetBox Maintenance Device: Skipping cleanup for in-memory database")
+        return
+    
+    try:
+        with connection.cursor() as cursor:
             # Check if we're using PostgreSQL, SQLite, or another database
             cursor.execute("SELECT version();")
             db_version = cursor.fetchone()[0]
@@ -54,13 +62,13 @@ def cleanup_orphaned_notification_table(apps, schema_editor):
                     table_exists = False
             
             if table_exists:
-                print("NetBox Maintenance Device: Found orphaned notification table, cleaning up...")
+                logger.warning("NetBox Maintenance Device: Found orphaned notification table, cleaning up...")
                 
                 # Get information about existing records (for logging)
                 try:
                     cursor.execute("SELECT COUNT(*) FROM netbox_maintenance_device_maintenancenotification;")
                     record_count = cursor.fetchone()[0]
-                    print(f"NetBox Maintenance Device: Removing {record_count} orphaned notification records")
+                    logger.info(f"NetBox Maintenance Device: Removing {record_count} orphaned notification records")
                 except:
                     record_count = 0
                 
@@ -86,24 +94,23 @@ def cleanup_orphaned_notification_table(apps, schema_editor):
                                     ALTER TABLE netbox_maintenance_device_maintenancenotification 
                                     DROP CONSTRAINT IF EXISTS "{constraint_name}";
                                 """)
-                                print(f"NetBox Maintenance Device: Dropped constraint {constraint_name}")
+                                logger.debug(f"NetBox Maintenance Device: Dropped constraint {constraint_name}")
                             except Exception as e:
-                                print(f"NetBox Maintenance Device: Warning - could not drop constraint {constraint_name}: {e}")
+                                logger.warning(f"NetBox Maintenance Device: Could not drop constraint {constraint_name}: {e}")
                     except Exception as e:
-                        print(f"NetBox Maintenance Device: Warning - could not query constraints: {e}")
+                        logger.warning(f"NetBox Maintenance Device: Could not query constraints: {e}")
                 
                 # Finally, drop the entire orphaned table
                 cursor.execute("DROP TABLE IF EXISTS netbox_maintenance_device_maintenancenotification;")
-                print("NetBox Maintenance Device: Successfully removed orphaned notification table")
-                print("NetBox Maintenance Device: MaintenancePlan operations should now work correctly")
+                logger.info("NetBox Maintenance Device: Successfully removed orphaned notification table")
                 
             else:
-                print("NetBox Maintenance Device: No orphaned notification table found - database is clean")
+                logger.debug("NetBox Maintenance Device: No orphaned notification table found - database is clean")
                 
-        except Exception as e:
-            # Log the error but don't fail the migration
-            print(f"NetBox Maintenance Device: Warning during cleanup: {e}")
-            # Continue with migration - this cleanup is best-effort
+    except Exception as e:
+        # Log the error but don't fail the migration
+        logger.warning(f"NetBox Maintenance Device: Warning during cleanup: {e}")
+        # Continue with migration - this cleanup is best-effort
 
 
 def reverse_cleanup(apps, schema_editor):
@@ -111,7 +118,9 @@ def reverse_cleanup(apps, schema_editor):
     This migration is irreversible as we're cleaning up orphaned data.
     The notification table was not part of the current plugin design.
     """
-    print("NetBox Maintenance Device: Cannot reverse orphaned table cleanup - migration is irreversible")
+    import logging
+    logger = logging.getLogger('netbox_maintenance_device')
+    logger.info("NetBox Maintenance Device: Cannot reverse orphaned table cleanup - migration is irreversible")
 
 
 class Migration(migrations.Migration):

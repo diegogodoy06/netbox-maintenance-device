@@ -80,29 +80,11 @@ class MaintenancePlan(NetBoxModel):
         return reverse('plugins:netbox_maintenance_device:maintenanceplan', args=[self.pk])
     
     def save(self, *args, **kwargs):
-        """Override save to include safety checks."""
-        # Check if database operations are safe
-        if not self.__class__.objects.safe_operations_check():
-            # Try to auto-heal before proceeding
-            try:
-                from .database_healer import auto_heal_database
-                auto_heal_database()
-            except Exception:
-                pass  # Continue with save even if auto-heal fails
-        
+        """Override save with basic safety checks."""
         super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
-        """Override delete to include safety checks."""
-        # Check if database operations are safe
-        if not self.__class__.objects.safe_operations_check():
-            # Try to auto-heal before proceeding
-            try:
-                from .database_healer import auto_heal_database
-                auto_heal_database()
-            except Exception:
-                pass  # Continue with delete even if auto-heal fails
-        
+        """Override delete with basic safety checks."""
         super().delete(*args, **kwargs)
     
     def get_next_maintenance_date(self):
