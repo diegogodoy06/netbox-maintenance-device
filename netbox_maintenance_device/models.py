@@ -7,35 +7,6 @@ from netbox.models import NetBoxModel
 from dcim.models import Device
 
 
-class MaintenanceDeviceManager(models.Manager):
-    """Custom manager for maintenance models with integrity checks."""
-    
-    def safe_operations_check(self):
-        """
-        Check if database operations are safe by detecting orphaned tables.
-        
-        Returns:
-            bool: True if operations are safe, False if issues detected
-        """
-        from django.db import connection
-        
-        try:
-            with connection.cursor() as cursor:
-                # Try to detect the problematic orphaned table
-                try:
-                    cursor.execute(
-                        "SELECT 1 FROM netbox_maintenance_device_maintenancenotification LIMIT 1;"
-                    )
-                    # If this succeeds, we have the orphaned table
-                    return False
-                except Exception:
-                    # If this fails, the orphaned table doesn't exist (good)
-                    return True
-        except Exception:
-            # If we can't check, assume it's safe
-            return True
-
-
 class MaintenancePlan(NetBoxModel):
     """Maintenance plan for a device with frequency and type"""
     
@@ -63,9 +34,6 @@ class MaintenancePlan(NetBoxModel):
         verbose_name=_('Frequency (days)')
     )
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
-    
-    # Use custom manager
-    objects = MaintenanceDeviceManager()
     
     class Meta:
         ordering = ['device', 'name']
@@ -140,9 +108,6 @@ class MaintenanceExecution(NetBoxModel):
     notes = models.TextField(blank=True, verbose_name=_('Notes'))
     technician = models.CharField(max_length=100, blank=True, verbose_name=_('Technician'))
     completed = models.BooleanField(default=False, verbose_name=_('Completed'))
-    
-    # Use custom manager
-    objects = MaintenanceDeviceManager()
     
     class Meta:
         ordering = ['-scheduled_date']

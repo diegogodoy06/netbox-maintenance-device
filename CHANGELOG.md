@@ -16,9 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Configuration Options**: New `auto_heal_database` configuration option
 
 ### Fixed
-- **IntegrityError Resolution**: Automatically resolves foreign key constraint violations from orphaned notification tables
+- **[CRÍTICO] IntegrityError Resolution**: Automatically resolves foreign key constraint violations from orphaned notification tables
+- **[CRÍTICO] collectstatic AttributeError**: Fixed `'MaintenanceDeviceConfig' object has no attribute 'get_config'` during Docker builds
+- **[CRÍTICO] Manager AttributeError**: Fixed `'MaintenanceDeviceManager' object has no attribute 'restrict'` by removing custom manager
 - **Database Consistency**: Ensures database integrity during save/delete operations
 - **Migration Safety**: Enhanced migration process with multi-database support
+- **Docker Build Compatibility**: Plugin now initializes safely during collectstatic operations
 
 ### Changed
 - **Plugin Version**: Updated to 1.2.1
