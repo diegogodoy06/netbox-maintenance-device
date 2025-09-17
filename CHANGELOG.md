@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.1] - 2025-09-17
 
 ### Added
+- **Complete REST API**: Full CRUD API implementation for external integrations
+  - 17 API endpoints for maintenance plans and executions
+  - Advanced filtering, pagination, and ordering
+  - Custom actions: schedule, complete, cancel maintenance
+  - Statistics and reporting endpoints
+  - Comprehensive permission system
+  - Token and session authentication support
 - **Automatic Database Healing**: Plugin now automatically detects and resolves orphaned table issues
 - **Enhanced Migration System**: Migration `0002_cleanup_notifications.py` handles database cleanup
 - **Model-Level Safety Checks**: MaintenancePlan and MaintenanceExecution models include integrity verification
@@ -19,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **[CRÍTICO] IntegrityError Resolution**: Automatically resolves foreign key constraint violations from orphaned notification tables
 - **[CRÍTICO] collectstatic AttributeError**: Fixed `'MaintenanceDeviceConfig' object has no attribute 'get_config'` during Docker builds
 - **[CRÍTICO] Manager AttributeError**: Fixed `'MaintenanceDeviceManager' object has no attribute 'restrict'` by removing custom manager
+- **[CRÍTICO] Internationalization**: Fixed menu labels appearing in Portuguese even when NetBox is set to English
+
+### Changed
+- **Versioning Strategy**: Adopted conservative version compatibility (NetBox 4.4.0-4.4.99)
+- **Plugin Description**: Updated to reflect multilingual support instead of Portuguese-only
+- **Menu Navigation**: Improved internationalization with proper English defaults
 - **Database Consistency**: Ensures database integrity during save/delete operations
 - **Migration Safety**: Enhanced migration process with multi-database support
 - **Docker Build Compatibility**: Plugin now initializes safely during collectstatic operations
