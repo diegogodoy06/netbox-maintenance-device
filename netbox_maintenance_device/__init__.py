@@ -30,15 +30,10 @@ class MaintenanceDeviceConfig(PluginConfig):
         """
         super().ready()
         
-        # Perform automatic database healing if enabled
-        if self.get_config().get('auto_heal_database', True):
-            try:
-                from .database_healer import auto_heal_database
-                auto_heal_database()
-            except Exception as e:
-                # Don't let auto-healing failures break plugin initialization
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"NetBox Maintenance Device: Auto-healing failed: {e}")
+        # Note: Database auto-healing is handled by migrations and model operations
+        # to avoid issues during initial Django setup and collectstatic operations
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("NetBox Maintenance Device v1.2.1 initialized successfully")
 
 config = MaintenanceDeviceConfig
