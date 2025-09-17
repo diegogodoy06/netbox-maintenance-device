@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Plugin Version**: Updated to 1.2.1
+- **NetBox Compatibility**: Narrowed to 4.4.x for this release (following best practices)
+- **Versioning Strategy**: Using conservative version ranges instead of broad compatibility claims
 - **Plugin Description**: Enhanced description with Portuguese-BR support mention
 - **Model Managers**: Added custom manager with safety check capabilities
 - **Error Handling**: Improved error handling during database operations

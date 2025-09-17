@@ -1,18 +1,19 @@
 from netbox.plugins import PluginConfig
+from django.utils.translation import gettext_lazy as _
 
 class MaintenanceDeviceConfig(PluginConfig):
     name = 'netbox_maintenance_device'
-    verbose_name = 'Netbox Manutenção de Dispositivos'
-    description = 'Manage device preventive and corrective maintenance with Portuguese-BR support'
+    verbose_name = _('NetBox Device Maintenance')
+    description = 'Manage device preventive and corrective maintenance with multilingual support'
     version = '1.2.1'
     author = 'Diego Godoy'
     author_email = 'diegoalex-gdy@outlook.com'
     base_url = 'maintenance-device'
     icon = 'mdi-wrench-cog'
     
-    # Required NetBox version
-    min_version = '4.0.0'
-    max_version = '4.9.0'
+    # Required NetBox version - Conservative range for this release
+    min_version = '4.4.0'
+    max_version = '4.4.99'
     
     # Default configurations
     default_settings = {

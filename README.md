@@ -22,14 +22,16 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 
 ## Compatibility
 
-| NetBox Version | Plugin Support |
-|----------------|----------------|
-| 4.4.x | ✅ |
-| 4.3.x | ✅ |
-| 4.2.x | ✅ |
-| 4.1.x | ✅ |
-| 4.0.x | ✅ |
-| 3.x | ❌ |
+| NetBox Version | Plugin Support | Notes |
+|----------------|----------------|-------|
+| 4.4.x | ✅ **Tested & Supported** | Current target version |
+| 4.3.x | ⚠️ **Likely Compatible** | Not officially tested |
+| 4.2.x | ⚠️ **Likely Compatible** | Not officially tested |
+| 4.1.x | ⚠️ **Likely Compatible** | Not officially tested |
+| 4.0.x | ⚠️ **Likely Compatible** | Not officially tested |
+| 3.x | ❌ **Not Supported** | Breaking changes |
+
+> **Note**: This version (v1.2.1) is specifically tested and certified for NetBox 4.4.x. While it may work with other 4.x versions, we recommend testing in a development environment first.
 
 
 
@@ -274,6 +276,48 @@ curl -H "Authorization: Token your-api-token" \
 - **✅ Statistics & Reports**: Get overdue/upcoming maintenance data
 - **✅ NetBox Authentication**: Uses NetBox token authentication
 - **✅ Permission Control**: Granular permission management
+
+---
+
+## 📚 Documentation
+
+### Complete API Documentation
+
+For comprehensive documentation on the REST API and integration capabilities:
+
+- 📖 **[API Documentation](API_DOCUMENTATION.md)** - Complete API reference
+- 💡 **[API Examples](API_EXAMPLES.md)** - Practical usage examples
+- 🚀 **[Implementation Summary](API_IMPLEMENTATION_SUMMARY.md)** - Project overview
+- 📋 **[Versioning Strategy](VERSIONING_STRATEGY.md)** - Version compatibility
+- 📚 **[Documentation Index](DOCUMENTATION_INDEX.md)** - Navigate all docs
+
+### Quick Start API Examples
+
+#### Authentication
+
+```bash
+# Using NetBox Token
+curl -H "Authorization: Token your-netbox-token" \
+     https://your-netbox.com/api/plugins/netbox-maintenance-device/
+```
+
+#### Create Maintenance Plan
+
+```bash
+curl -X POST -H "Authorization: Token your-token" \
+     -H "Content-Type: application/json" \
+     -d '{"device": 1, "name": "Monthly Check", "maintenance_type": "preventive"}' \
+     https://your-netbox.com/api/plugins/netbox-maintenance-device/maintenance-plans/
+```
+
+#### Get Upcoming Maintenance
+
+```bash
+curl -H "Authorization: Token your-token" \
+     https://your-netbox.com/api/plugins/netbox-maintenance-device/maintenance-plans/upcoming/
+```
+
+---
 
 
 ## 🤝 Contributing
