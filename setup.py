@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='netbox_maintenance_device',
-    version='1.2.0',
+    version='1.2.1',
     description='NetBox plugin for device maintenance management with Portuguese-BR support',
     long_description=long_description,
     long_description_content_type="text/markdown",
