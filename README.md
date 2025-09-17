@@ -265,8 +265,6 @@ curl -H "Authorization: Token your-api-token" \
 | `/maintenance-plans/statistics/` | GET | Get plan statistics |
 | `/maintenance-executions/pending/` | GET | Get pending executions |
 
-📖 **[Complete API Documentation](API_DOCUMENTATION.md)**
-
 ### Integration Capabilities
 
 - **✅ Full CRUD Operations**: Create, read, update, delete
@@ -279,17 +277,7 @@ curl -H "Authorization: Token your-api-token" \
 
 ---
 
-## 📚 Documentation
-
-### Complete API Documentation
-
-For comprehensive documentation on the REST API and integration capabilities:
-
-- 📖 **[API Documentation](API_DOCUMENTATION.md)** - Complete API reference
-- 💡 **[API Examples](API_EXAMPLES.md)** - Practical usage examples
-- 🚀 **[Implementation Summary](API_IMPLEMENTATION_SUMMARY.md)** - Project overview
-- 📋 **[Versioning Strategy](VERSIONING_STRATEGY.md)** - Version compatibility
-- 📚 **[Documentation Index](DOCUMENTATION_INDEX.md)** - Navigate all docs
+## 📚 API Documentation
 
 ### Quick Start API Examples
 
