@@ -37,17 +37,17 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 
 ## Installation
 
-### Method 1: PyPI Installation (Recommended)
-
-```bash
-pip install netbox-maintenance-device
-```
+### Method 1: PyPI Installation 
+This plugin is not published on PyPI yet.  
+To install directly from GitHub, use:
 
 ### Method 2: GitHub Installation
 
 ```bash
 pip install git+https://github.com/diegogodoy06/netbox-maintenance-device.git
 ```
+Note: You may see a warning about setup.py being deprecated.
+The installation still works fine, and a pyproject.toml will be added soon to remove this warning.
 
 ### Method 3: Docker Installation
 
