@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+# Aumentamos as versões mínimas para evitar bugs antigos de metadata em versões mais velhas do setuptools/wheel
+requires = ["setuptools>=70.0", "wheel>=0.44", "build>=1.2.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
