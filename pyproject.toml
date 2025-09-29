@@ -9,10 +9,10 @@ description = "NetBox plugin for device maintenance management with comprehensiv
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [
-    {name = "Diego Godoy", email = "diego.godoy06@gmail.com"},
+    {name = "Diego Godoy", email = "diegoalex-gdy@outlook.com"},
 ]
 maintainers = [
-    {name = "Diego Godoy", email = "diego.godoy06@gmail.com"},
+    {name = "Diego Godoy", email = "diegoalex-gdy@outlook.com"},
 ]
 keywords = [
     "netbox",
