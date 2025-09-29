@@ -1,0 +1,46 @@
+name: Security Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly security checks
+    - cron: '0 0 * * 0'
+
+jobs:
+  security:
+    name: Security Scan 🔒
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety
+          
+      - name: Run Bandit security scan
+        run: |
+          bandit -r netbox_maintenance_device/ -f json -o bandit-report.json || true
+          bandit -r netbox_maintenance_device/ || true
+          
+      - name: Run Safety check for vulnerable dependencies
+        run: |
+          pip freeze | safety check --stdin || true
+          
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-report
+          path: bandit-report.json
+          retention-days: 30
