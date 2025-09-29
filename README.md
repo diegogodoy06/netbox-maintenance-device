@@ -37,17 +37,17 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 
 ## Installation
 
-### Method 1: PyPI Installation (Recommended)
-
-```bash
-pip install netbox-maintenance-device
-```
+### Method 1: PyPI Installation 
+This plugin is not published on PyPI yet.  
+To install directly from GitHub, use:
 
 ### Method 2: GitHub Installation
 
 ```bash
 pip install git+https://github.com/diegogodoy06/netbox-maintenance-device.git
 ```
+Note: You may see a warning about setup.py being deprecated.
+The installation still works fine, and a pyproject.toml will be added soon to remove this warning.
 
 ### Method 3: Docker Installation
 
@@ -243,33 +243,6 @@ docker compose restart netbox netbox-worker
 - **Notes**: Detailed maintenance notes
 
 
-## 🔌 API Integration
-
-The plugin provides a complete REST API for external integration and automation. Perfect for:
-
-- **Monitoring Systems**: Integrate with Zabbix, Nagios, Prometheus
-- **Automation**: Schedule maintenance via scripts and workflows  
-- **ITSM Integration**: Connect with ServiceNow, Jira Service Management
-- **Custom Applications**: Build maintenance dashboards and tools
-
-### Quick API Examples
-
-```bash
-# Get all overdue maintenance plans
-curl -H "Authorization: Token your-api-token" \
-  "https://netbox.example.com/api/plugins/netbox-maintenance-device/maintenance-plans/overdue/"
-
-# Schedule maintenance
-curl -X POST -H "Authorization: Token your-api-token" \
-  -H "Content-Type: application/json" \
-  -d '{"scheduled_date": "2025-10-20T09:00:00Z", "technician": "John Doe"}' \
-  "https://netbox.example.com/api/plugins/netbox-maintenance-device/maintenance-plans/1/schedule-maintenance/"
-
-# Get maintenance statistics
-curl -H "Authorization: Token your-api-token" \
-  "https://netbox.example.com/api/plugins/netbox-maintenance-device/maintenance-plans/statistics/"
-```
-
 ### Available Endpoints
 
 | Endpoint | Operations | Description |
@@ -281,45 +254,6 @@ curl -H "Authorization: Token your-api-token" \
 | `/maintenance-plans/statistics/` | GET | Get plan statistics |
 | `/maintenance-executions/pending/` | GET | Get pending executions |
 
-### Integration Capabilities
-
-- **✅ Full CRUD Operations**: Create, read, update, delete
-- **✅ Advanced Filtering**: Filter by device, type, status, dates
-- **✅ Custom Actions**: Schedule, complete, cancel maintenance
-- **✅ Bulk Operations**: Handle multiple records efficiently
-- **✅ Statistics & Reports**: Get overdue/upcoming maintenance data
-- **✅ NetBox Authentication**: Uses NetBox token authentication
-- **✅ Permission Control**: Granular permission management
-
----
-
-## 📚 API Documentation
-
-### Quick Start API Examples
-
-#### Authentication
-
-```bash
-# Using NetBox Token
-curl -H "Authorization: Token your-netbox-token" \
-     https://your-netbox.com/api/plugins/netbox-maintenance-device/
-```
-
-#### Create Maintenance Plan
-
-```bash
-curl -X POST -H "Authorization: Token your-token" \
-     -H "Content-Type: application/json" \
-     -d '{"device": 1, "name": "Monthly Check", "maintenance_type": "preventive"}' \
-     https://your-netbox.com/api/plugins/netbox-maintenance-device/maintenance-plans/
-```
-
-#### Get Upcoming Maintenance
-
-```bash
-curl -H "Authorization: Token your-token" \
-     https://your-netbox.com/api/plugins/netbox-maintenance-device/maintenance-plans/upcoming/
-```
 
 ---
 
