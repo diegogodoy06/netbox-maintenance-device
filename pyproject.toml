@@ -1,0 +1,107 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox-maintenance-device"
+version = "1.2.1"
+description = "NetBox plugin for device maintenance management with comprehensive REST API and Portuguese-BR support"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Diego Godoy", email = "diego.godoy06@gmail.com"},
+]
+maintainers = [
+    {name = "Diego Godoy", email = "diego.godoy06@gmail.com"},
+]
+keywords = [
+    "netbox",
+    "plugin", 
+    "maintenance",
+    "device",
+    "preventive",
+    "corrective",
+    "api",
+    "rest",
+    "automation",
+    "infrastructure",
+    "django"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: System Administrators", 
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9", 
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: Django",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Systems Administration",
+]
+requires-python = ">=3.8"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "black>=22.0.0",
+    "flake8>=4.0.0", 
+    "pytest>=7.0.0",
+    "pytest-django>=4.5.0",
+    "pre-commit>=2.20.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/diegogodoy06/netbox-maintenance-device"
+"Bug Reports" = "https://github.com/diegogodoy06/netbox-maintenance-device/issues"
+"Source" = "https://github.com/diegogodoy06/netbox-maintenance-device"
+"Documentation" = "https://github.com/diegogodoy06/netbox-maintenance-device/blob/main/README.md"
+"Changelog" = "https://github.com/diegogodoy06/netbox-maintenance-device/releases"
+
+[tool.setuptools]
+packages = ["netbox_maintenance_device"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+netbox_maintenance_device = [
+    "static/**/*",
+    "templates/**/*", 
+    "locale/**/*",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+[tool.flake8]
+max-line-length = 100
+exclude = [
+    ".git",
+    "__pycache__",
+    "migrations",
+    "build",
+    "dist",
+    ".venv",
+    ".eggs",
+    "*.egg-info"
+]

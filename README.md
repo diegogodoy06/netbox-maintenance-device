@@ -57,6 +57,22 @@ For Docker-based NetBox installations using [netbox-docker](https://github.com/n
 
 #### Quick Docker Setup
 
+## Installation
+
+### Method 1: PyPI (Recommended)
+
+```bash
+# Install via pip
+pip install netbox-maintenance-device
+```
+
+**For Docker deployments**, add to your `plugin_requirements.txt`:
+```bash
+echo "netbox-maintenance-device>=1.2.1" >> plugin_requirements.txt
+```
+
+### Method 2: From Source
+
 1. Add to `plugin_requirements.txt`:
 ```bash
 echo "https://github.com/diegogodoy06/netbox-maintenance-device/archive/main.tar.gz" >> plugin_requirements.txt
