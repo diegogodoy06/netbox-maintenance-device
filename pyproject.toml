@@ -62,8 +62,13 @@ dev = [
 "Changelog" = "https://github.com/diegogodoy06/netbox-maintenance-device/releases"
 
 [tool.setuptools]
-packages = {find = {}}
+packages = ["netbox_maintenance_device"]
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["netbox_maintenance_device*"]
+exclude = ["tests*"]
 
 [tool.setuptools.package-data]
 "*" = [
