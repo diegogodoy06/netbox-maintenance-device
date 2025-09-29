@@ -1,5 +1,5 @@
 include README.md
-include DOCKER_INSTALL.md
+include CHANGELOG.md
 include LICENSE
 recursive-include netbox_maintenance_device/templates *
 recursive-include netbox_maintenance_device/static *
@@ -8,3 +8,6 @@ recursive-include netbox_maintenance_device/migrations *
 global-exclude *.pyc
 global-exclude __pycache__
 global-exclude *.py[co]
+global-exclude *.DS_Store
+global-exclude .pytest_cache
+global-exclude tests

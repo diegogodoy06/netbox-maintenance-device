@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name='netbox_maintenance_device',
+    name='netbox-maintenance-device',  # Nome com hífen para PyPI
     version='1.2.1',
     description='NetBox plugin for device maintenance management with comprehensive REST API and Portuguese-BR support',
     long_description=long_description,
@@ -13,11 +13,13 @@ setup(
     author_email='diego.godoy06@gmail.com',
     url='https://github.com/diegogodoy06/netbox-maintenance-device',
     project_urls={
+        'Homepage': 'https://github.com/diegogodoy06/netbox-maintenance-device',
         'Bug Reports': 'https://github.com/diegogodoy06/netbox-maintenance-device/issues',
         'Source': 'https://github.com/diegogodoy06/netbox-maintenance-device',
         'Documentation': 'https://github.com/diegogodoy06/netbox-maintenance-device/blob/main/README.md',
+        'Changelog': 'https://github.com/diegogodoy06/netbox-maintenance-device/releases',
     },
-    license='Apache 2.0',
+    license='Apache-2.0',
     keywords=['netbox', 'plugin', 'maintenance', 'device', 'preventive', 'corrective', 'api', 'rest', 'automation'],
     install_requires=[
         # NetBox já inclui django-filter e django-tables2
