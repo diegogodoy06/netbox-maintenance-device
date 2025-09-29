@@ -10,7 +10,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author='Diego Godoy',
-    author_email='diego.godoy06@gmail.com',
+    author_email='diegoalex-gdy@outlook.com',
     url='https://github.com/diegogodoy06/netbox-maintenance-device',
     project_urls={
         'Homepage': 'https://github.com/diegogodoy06/netbox-maintenance-device',
