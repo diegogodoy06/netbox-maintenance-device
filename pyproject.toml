@@ -7,7 +7,7 @@ name = "netbox-maintenance-device"
 version = "1.2.1"
 description = "NetBox plugin for device maintenance management with comprehensive REST API and Portuguese-BR support"
 readme = "README.md"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 authors = [
     {name = "Diego Godoy", email = "diegoalex-gdy@outlook.com"},
 ]
@@ -31,7 +31,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: System Administrators", 
     "Intended Audience :: Telecommunications Industry",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
@@ -63,14 +62,15 @@ dev = [
 "Changelog" = "https://github.com/diegogodoy06/netbox-maintenance-device/releases"
 
 [tool.setuptools]
-packages = ["netbox_maintenance_device"]
+packages = {find = {}}
 include-package-data = true
 
 [tool.setuptools.package-data]
-netbox_maintenance_device = [
+"*" = [
     "static/**/*",
     "templates/**/*", 
     "locale/**/*",
+    "migrations/**/*",
 ]
 
 [tool.black]
