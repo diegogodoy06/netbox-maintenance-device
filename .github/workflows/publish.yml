@@ -72,6 +72,14 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+      - name: Inspect wheel METADATA (debug)
+        run: |
+          echo "Listing dist/ contents";
+          ls -l dist;
+          python -c "import zipfile, sys, json, pathlib; import os;\nwheel=[p for p in pathlib.Path('dist').glob('*.whl')][0];\nprint('Analyzing', wheel);\nwith zipfile.ZipFile(wheel) as z: \n    meta=[n for n in z.namelist() if n.endswith('METADATA')][0];\n    data=z.read(meta).decode();\n    print('--- METADATA START ---');\n    print('\n'.join(data.splitlines()[:40]));\n    print('--- (truncated) ---');\n    assert 'Name: netbox-maintenance-device' in data, 'Name field missing in METADATA';\n    assert 'Version: ' in data, 'Version field missing in METADATA';\n    print('Name/Version present OK');"
+      - name: Show pyproject used (debug)
+        run: |
+          sed -n '1,120p' pyproject.toml
           
       - name: Publish to PyPI (with token)
         uses: pypa/gh-action-pypi-publish@v1.10.3
