@@ -1,13 +1,12 @@
 [build-system]
-# Aumentamos as versões mínimas para evitar bugs antigos de metadata em versões mais velhas do setuptools/wheel
-requires = ["setuptools>=70.0", "wheel>=0.44", "build>=1.2.2"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-maintenance-device"
 version = "1.2.1"
 description = "NetBox plugin for device maintenance management with comprehensive REST API and Portuguese-BR support"
-readme = "README.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 license = "Apache-2.0"
 authors = [
     {name = "Diego Godoy", email = "diegoalex-gdy@outlook.com"},
@@ -63,15 +62,17 @@ dev = [
 "Changelog" = "https://github.com/diegogodoy06/netbox-maintenance-device/releases"
 
 [tool.setuptools]
-packages = ["netbox_maintenance_device"]
+packages = {find = {}}
 include-package-data = true
 
 [tool.setuptools.package-data]
-"*" = [
+"netbox_maintenance_device" = [
     "static/**/*",
     "templates/**/*", 
     "locale/**/*",
     "migrations/**/*",
+    "api/**/*",
+    "templatetags/**/*",
 ]
 
 [tool.black]
