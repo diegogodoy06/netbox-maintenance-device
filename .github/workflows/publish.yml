@@ -10,6 +10,10 @@ on:
         required: false
         default: false
         type: boolean
+      version:
+        description: 'Version to publish (optional, reads from pyproject.toml if empty)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -19,6 +23,9 @@ jobs:
     name: Build distribution 📦
     runs-on: ubuntu-latest
     
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,6 +34,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          
+      - name: Get version from pyproject.toml
+        id: get-version
+        run: |
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Building version: $VERSION"
           
       - name: Install build dependencies
         run: |
@@ -44,9 +58,13 @@ jobs:
       - name: Verify build outputs
         run: |
           ls -la dist/
-          echo "Checking package contents:"
+          echo "📋 Checking package contents:"
           python -m twine check dist/*
-          echo "Package validation completed successfully"
+          echo "✅ Package validation completed successfully"
+          echo "📦 Built files:"
+          find dist/ -name "*.whl" -o -name "*.tar.gz" | while read file; do
+            echo "  - $(basename "$file") ($(du -h "$file" | cut -f1))"
+          done
           
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -75,30 +93,76 @@ jobs:
           name: python-package-distributions
           path: dist/
           
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          
       - name: Verify package contents
         run: |
-          echo "Listing dist/ contents:"
+          echo "📋 Listing dist/ contents:"
           ls -la dist/
-          echo "Checking wheel metadata:"
+          echo "🔍 Checking wheel metadata:"
           python -m zipfile -l dist/*.whl | head -20
           
       - name: Validate distributions
         run: |
           python -m pip install --upgrade pip
           pip install "setuptools>=61.0" "twine>=4.0.0"
+          echo "🔍 Running final validation..."
           python -m twine check dist/*
+          echo "✅ Validation passed!"
           
-      - name: Publish to PyPI (with token)
+      - name: Check if version exists on PyPI
+        id: check-version
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          echo "🔍 Checking if version $VERSION already exists on PyPI..."
+          if curl -s "https://pypi.org/pypi/netbox-maintenance-device/$VERSION/json" | grep -q "Not Found"; then
+            echo "version-exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Version $VERSION is available for upload"
+          else
+            echo "version-exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Version $VERSION already exists on PyPI"
+          fi
+          
+      - name: Publish to PyPI
+        if: steps.check-version.outputs.version-exists == 'false'
         uses: pypa/gh-action-pypi-publish@v1.10.3
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           verbose: true
+          print-hash: true
+          
+      - name: Skip upload (version exists)
+        if: steps.check-version.outputs.version-exists == 'true'
+        run: |
+          echo "⚠️ Version ${{ needs.build.outputs.version }} already exists on PyPI"
+          echo "🔄 Skipping upload to prevent conflict"
+          echo "💡 To publish a new version, update the version in pyproject.toml"
           
       - name: Create GitHub Release Summary
         if: success()
         run: |
+          VERSION="${{ needs.build.outputs.version }}"
           echo "🎉 **Publication successful!**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📦 **Package:** netbox-maintenance-device" >> $GITHUB_STEP_SUMMARY
+          echo "🏷️ **Version:** $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **PyPI:** https://pypi.org/project/netbox-maintenance-device/$VERSION/" >> $GITHUB_STEP_SUMMARY
+          echo "📥 **Install:** \`pip install netbox-maintenance-device==$VERSION\`" >> $GITHUB_STEP_SUMMARY
+          echo "📥 **Install Latest:** \`pip install netbox-maintenance-device\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **Status:** Ready for installation worldwide!" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Create GitHub Release Summary (Skip)
+        if: steps.check-version.outputs.version-exists == 'true'
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          echo "⚠️ **Upload skipped**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Package:** netbox-maintenance-device" >> $GITHUB_STEP_SUMMARY
+          echo "🏷️ **Version:** $VERSION (already exists)" >> $GITHUB_STEP_SUMMARY
           echo "🔗 **PyPI:** https://pypi.org/project/netbox-maintenance-device/" >> $GITHUB_STEP_SUMMARY
-          echo "📥 **Install:** \`pip install netbox-maintenance-device\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **Next steps:** Update version in pyproject.toml and try again" >> $GITHUB_STEP_SUMMARY
