@@ -2,7 +2,10 @@
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![NetBox](https://img.shields.io/badge/NetBox-4.0%2B-orange)](https://netbox.dev/)
+[![PyPI](https://img.shields.io/pypi/v/netbox-maintenance-device)](https://pypi.org/project/netbox-maintenance-device/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/netbox-maintenance-device)](https://pypi.org/project/netbox-maintenance-device/)
 [![Language](https://img.shields.io/badge/Language-EN%20%7C%20PT--BR-brightgreen)](README.md)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 A comprehensive NetBox plugin for managing device preventive and corrective maintenance with enhanced visual indicators, scheduling capabilities, and multi-language support.
 
@@ -37,33 +40,16 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 
 ## Installation
 
-### Method 1: PyPI Installation 
-This plugin is not published on PyPI yet.  
-To install directly from GitHub, use:
+### Method 1: PyPI Installation (Recommended) 🎉
 
-### Method 2: GitHub Installation
+**Now officially available on PyPI!**
 
 ```bash
-pip install git+https://github.com/diegogodoy06/netbox-maintenance-device.git
-```
-Note: You may see a warning about setup.py being deprecated.
-The installation still works fine, and a pyproject.toml will be added soon to remove this warning.
-
-### Method 3: Docker Installation
-
-For Docker-based NetBox installations using [netbox-docker](https://github.com/netbox-community/netbox-docker):
-
-> **📋 For detailed Docker installation instructions in English and Portuguese, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md)**
-
-#### Quick Docker Setup
-
-## Installation
-
-### Method 1: PyPI (Recommended)
-
-```bash
-# Install via pip
+# Install the latest version
 pip install netbox-maintenance-device
+
+# Or install a specific version
+pip install netbox-maintenance-device==1.2.1
 ```
 
 **For Docker deployments**, add to your `plugin_requirements.txt`:
@@ -71,25 +57,18 @@ pip install netbox-maintenance-device
 echo "netbox-maintenance-device>=1.2.1" >> plugin_requirements.txt
 ```
 
-### Method 2: From Source
+### Method 2: GitHub Installation
 
-1. Add to `plugin_requirements.txt`:
 ```bash
-echo "https://github.com/diegogodoy06/netbox-maintenance-device/archive/main.tar.gz" >> plugin_requirements.txt
+# Install from GitHub (development version)
+pip install git+https://github.com/diegogodoy06/netbox-maintenance-device.git
 ```
 
-2. Configure in `configuration/plugins.py`:
-```python
-PLUGINS = ['netbox_maintenance_device']
-```
+### Method 3: Docker Installation
 
-3. Rebuild and restart:
-```bash
-docker compose down
-docker compose build --no-cache
-docker compose up -d
-docker compose exec netbox python manage.py migrate
-```
+For Docker-based NetBox installations using [netbox-docker](https://github.com/netbox-community/netbox-docker):
+
+> **📋 For detailed Docker installation instructions in English and Portuguese, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md)**
 
 ## Configuration
 
