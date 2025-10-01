@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=68.0", "wheel>=0.38.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-maintenance-device"
 version = "1.2.1"
 description = "NetBox plugin for device maintenance management with comprehensive REST API and Portuguese-BR support"
-readme = {file = "README.md", content-type = "text/markdown"}
+readme = "README.md"
 license = "Apache-2.0"
 authors = [
     {name = "Diego Godoy", email = "diegoalex-gdy@outlook.com"},
