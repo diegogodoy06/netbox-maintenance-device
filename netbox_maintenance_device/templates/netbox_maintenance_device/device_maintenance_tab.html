@@ -245,8 +245,35 @@
 
 <script>
 $(document).ready(function() {
+    // Setup CSRF token for AJAX requests
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    var csrftoken = getCookie('csrftoken');
+    
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    
     // Handle quick completion for maintenance plans
-    $('.quick-complete').click(function() {
+    $('.quick-complete').click(function(e) {
+        e.preventDefault();
         var planId = $(this).data('plan-id');
         var deviceId = $(this).data('device-id');
         $('#planId').val(planId);
@@ -256,7 +283,8 @@ $(document).ready(function() {
     });
     
     // Handle completion for existing executions
-    $('.complete-execution').click(function() {
+    $('.complete-execution').click(function(e) {
+        e.preventDefault();
         var executionId = $(this).data('execution-id');
         $('#executionId').val(executionId);
         $('#planId').val('');
@@ -266,6 +294,9 @@ $(document).ready(function() {
     
     // Handle form submission
     $('#confirmComplete').click(function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> {% trans "Processing..." %}');
+        
         var formData = $('#quickCompleteForm').serialize();
         
         $.ajax({
@@ -277,12 +308,24 @@ $(document).ready(function() {
                     location.reload();
                 } else {
                     alert('{% trans "Error completing maintenance" %}: ' + response.error);
+                    $btn.prop('disabled', false).html('{% trans "Complete Maintenance" %}');
                 }
             },
-            error: function() {
-                alert('{% trans "Error completing maintenance" %}');
+            error: function(xhr) {
+                var errorMsg = '{% trans "Error completing maintenance" %}';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg += ': ' + xhr.responseJSON.error;
+                }
+                alert(errorMsg);
+                $btn.prop('disabled', false).html('{% trans "Complete Maintenance" %}');
             }
         });
+    });
+    
+    // Reset form when modal is hidden
+    $('#quickCompleteModal').on('hidden.bs.modal', function() {
+        $('#quickCompleteForm')[0].reset();
+        $('#confirmComplete').prop('disabled', false).html('{% trans "Complete Maintenance" %}');
     });
 });
 </script>

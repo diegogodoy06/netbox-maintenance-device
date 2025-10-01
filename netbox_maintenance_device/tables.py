@@ -64,9 +64,9 @@ class UpcomingMaintenanceTable(NetBoxTable):
     device = tables.Column(linkify=True)
     name = tables.Column(linkify=True)
     maintenance_type = tables.Column()
-    next_due = tables.Column(empty_values=(), verbose_name='Next Due', orderable=False)
-    days_until = tables.Column(empty_values=(), verbose_name='Days Until Due', orderable=False)
-    status = tables.Column(empty_values=(), verbose_name='Status', orderable=False)
+    next_due = tables.Column(empty_values=(), verbose_name='Next Due', order_by=('device', 'name'))
+    days_until = tables.Column(empty_values=(), verbose_name='Days Until Due', order_by=('device', 'name'))
+    status = tables.Column(empty_values=(), verbose_name='Status', order_by=('is_active', 'device'))
     actions = tables.Column(empty_values=(), verbose_name='Actions', orderable=False)
     
     class Meta(NetBoxTable.Meta):
@@ -107,26 +107,30 @@ class UpcomingMaintenanceTable(NetBoxTable):
         return format_html('<span class="badge badge-success">On Track</span>')
     
     def render_actions(self, record):
+        from django.utils.html import escape
         actions = []
         days_until = record.days_until_due()
         
+        # Escape plan name to prevent issues with special characters
+        plan_name = escape(record.name)
+        
         # Schedule button - sempre disponível para planos ativos
         actions.append(
-            '<button class="btn btn-sm btn-outline-primary schedule-btn mr-1" '
+            '<button type="button" class="btn btn-sm btn-outline-primary schedule-btn mr-1" '
             'data-plan-id="{}" data-plan-name="{}" '
             'title="Schedule Maintenance">'
             '<i class="mdi mdi-calendar-plus"></i> Schedule'
-            '</button>'.format(record.pk, record.name)
+            '</button>'.format(record.pk, plan_name)
         )
         
         # Complete button - apenas para manutenções vencidas ou próximas
         if record.is_overdue() or (days_until is not None and days_until <= 7):
             actions.append(
-                '<button class="btn btn-sm btn-success quick-complete-btn" '
+                '<button type="button" class="btn btn-sm btn-success quick-complete-btn" '
                 'data-plan-id="{}" data-device-id="{}" data-plan-name="{}" '
                 'title="Complete Maintenance">'
                 '<i class="mdi mdi-check-circle"></i> Complete'
-                '</button>'.format(record.pk, record.device.pk, record.name)
+                '</button>'.format(record.pk, record.device.pk, plan_name)
             )
         
         return format_html(' '.join(actions)) if actions else '-'

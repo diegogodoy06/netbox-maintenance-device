@@ -127,12 +127,13 @@ def quick_complete_maintenance(request):
             execution.status = 'completed'
             execution.completed_date = timezone.now()
             execution.technician = technician
-            execution.notes = notes
+            if notes:
+                execution.notes = notes
             execution.save()
             
             return JsonResponse({
                 'success': True, 
-                'message': _('Maintenance execution completed successfully')
+                'message': str(_('Maintenance execution completed successfully'))
             })
             
         elif plan_id and device_id:
@@ -149,24 +150,26 @@ def quick_complete_maintenance(request):
                 completed_date=timezone.now(),
                 status='completed',
                 technician=technician,
-                notes=notes
+                notes=notes or 'Completed via quick action'
             )
             
             return JsonResponse({
                 'success': True, 
-                'message': _('Maintenance scheduled and completed successfully')
+                'message': str(_('Maintenance scheduled and completed successfully'))
             })
         else:
             return JsonResponse({
                 'success': False, 
-                'error': _('Missing required parameters')
-            })
+                'error': str(_('Missing required parameters'))
+            }, status=400)
             
     except Exception as e:
+        import traceback
         return JsonResponse({
             'success': False, 
-            'error': str(e)
-        })
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
 
 
 @require_http_methods(["POST"])
@@ -181,8 +184,8 @@ def schedule_maintenance(request):
         if not plan_id:
             return JsonResponse({
                 'success': False, 
-                'error': _('Missing maintenance plan ID')
-            })
+                'error': str(_('Missing maintenance plan ID'))
+            }, status=400)
         
         plan = get_object_or_404(models.MaintenancePlan, pk=plan_id)
         
@@ -203,17 +206,19 @@ def schedule_maintenance(request):
             scheduled_date=scheduled_datetime,
             status='scheduled',
             technician=technician,
-            notes=notes
+            notes=notes or 'Scheduled via quick action'
         )
         
         return JsonResponse({
             'success': True, 
-            'message': _('Maintenance scheduled successfully'),
+            'message': str(_('Maintenance scheduled successfully')),
             'execution_id': execution.pk
         })
         
     except Exception as e:
+        import traceback
         return JsonResponse({
             'success': False, 
-            'error': str(e)
-        })
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
