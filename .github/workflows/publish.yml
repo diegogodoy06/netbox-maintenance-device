@@ -31,20 +31,26 @@ jobs:
       - name: Install build dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build twine
+          pip install build twine setuptools wheel
+          
+      - name: Clean previous builds
+        run: |
+          rm -rf dist/ build/ *.egg-info/
           
       - name: Build package
         run: |
-          python -m build
+          python -m build --sdist --wheel
           
-      - name: Check distribution
-        run: |
-          python -m twine check dist/*
-          
-      - name: Show package info
+      - name: Verify build outputs
         run: |
           ls -la dist/
-          python -m pip show setuptools wheel build
+          echo "Checking package contents:"
+          python -m twine check dist/*
+          
+      - name: Test package installation
+        run: |
+          pip install dist/*.whl
+          python -c "import netbox_maintenance_device; print('Package imported successfully')"
           
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -72,14 +78,18 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-      - name: Inspect wheel METADATA (debug)
+          
+      - name: Verify package contents
         run: |
-          echo "Listing dist/ contents";
-          ls -l dist;
-          python -c "import zipfile, sys, json, pathlib; import os;\nwheel=[p for p in pathlib.Path('dist').glob('*.whl')][0];\nprint('Analyzing', wheel);\nwith zipfile.ZipFile(wheel) as z: \n    meta=[n for n in z.namelist() if n.endswith('METADATA')][0];\n    data=z.read(meta).decode();\n    print('--- METADATA START ---');\n    print('\n'.join(data.splitlines()[:40]));\n    print('--- (truncated) ---');\n    assert 'Name: netbox-maintenance-device' in data, 'Name field missing in METADATA';\n    assert 'Version: ' in data, 'Version field missing in METADATA';\n    print('Name/Version present OK');"
-      - name: Show pyproject used (debug)
+          echo "Listing dist/ contents:"
+          ls -la dist/
+          echo "Checking wheel metadata:"
+          python -m zipfile -l dist/*.whl | head -20
+          
+      - name: Validate distributions
         run: |
-          sed -n '1,120p' pyproject.toml
+          pip install twine
+          python -m twine check dist/*
           
       - name: Publish to PyPI (with token)
         uses: pypa/gh-action-pypi-publish@v1.10.3
