@@ -292,7 +292,7 @@ def schedule_maintenance(request):
             scheduled_date=scheduled_datetime,
             status='scheduled',
             technician=technician,
-            notes=notes or 'Scheduled via quick action'
+            notes=notes  # Don't add default note
         )
         
         return JsonResponse({

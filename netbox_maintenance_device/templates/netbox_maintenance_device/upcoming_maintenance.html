@@ -105,6 +105,7 @@
             <div class="modal-body">
                 <form id="quickCompleteForm">
                     {% csrf_token %}
+                    <input type="hidden" id="executionId" name="execution_id">
                     <input type="hidden" id="planId" name="plan_id">
                     <input type="hidden" id="deviceId" name="device_id">
                     <div class="form-group">
@@ -210,6 +211,36 @@
                 modalEl.style.display = 'block';
                 modalEl.classList.add('show');
                 document.body.classList.add('modal-open');
+                // Add backdrop
+                var backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = modalId + '-backdrop';
+                document.body.appendChild(backdrop);
+            }
+        }
+    }
+    
+    // Helper to hide modal
+    function hideModal(modalId) {
+        var modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            // Try Bootstrap 5 first
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
+            // Try Bootstrap 4 / jQuery fallback
+            else if (typeof jQuery !== 'undefined') {
+                jQuery('#' + modalId).modal('hide');
+            }
+            // Fallback: just hide it
+            else {
+                modalEl.style.display = 'none';
+                modalEl.classList.remove('show');
+                document.body.classList.remove('modal-open');
+                // Remove backdrop
+                var backdrop = document.getElementById(modalId + '-backdrop');
+                if (backdrop) backdrop.remove();
             }
         }
     }
@@ -226,20 +257,23 @@
                 
                 console.log('Quick complete button clicked');
                 
-                var planId = target.getAttribute('data-plan-id');
-                var deviceId = target.getAttribute('data-device-id');
+                var executionId = target.getAttribute('data-execution-id');
                 var planName = target.getAttribute('data-plan-name');
                 
-                console.log('Plan ID:', planId, 'Device ID:', deviceId, 'Plan Name:', planName);
+                console.log('Execution ID:', executionId, 'Plan Name:', planName);
                 
                 // Set form values
-                var planIdInput = document.getElementById('planId');
-                var deviceIdInput = document.getElementById('deviceId');
+                var executionIdInput = document.getElementById('executionId');
                 var modalTitle = document.querySelector('#quickCompleteModal .modal-title');
                 
-                if (planIdInput) planIdInput.value = planId;
-                if (deviceIdInput) deviceIdInput.value = deviceId;
+                if (executionIdInput) executionIdInput.value = executionId;
                 if (modalTitle) modalTitle.textContent = '{% trans "Complete Maintenance" %}: ' + planName;
+                
+                // Clear plan_id and device_id since we're completing an existing execution
+                var planIdInput = document.getElementById('planId');
+                var deviceIdInput = document.getElementById('deviceId');
+                if (planIdInput) planIdInput.value = '';
+                if (deviceIdInput) deviceIdInput.value = '';
                 
                 // Show modal
                 showModal('quickCompleteModal');
@@ -354,6 +388,23 @@
             });
         });
     }
+    
+    // Handle close buttons for modals
+    document.addEventListener('click', function(e) {
+        var target = e.target;
+        
+        // Check if clicked on close button or X button
+        if (target.getAttribute('data-dismiss') === 'modal' || 
+            target.closest('[data-dismiss="modal"]')) {
+            e.preventDefault();
+            
+            // Find the modal
+            var modal = target.closest('.modal');
+            if (modal) {
+                hideModal(modal.id);
+            }
+        }
+    });
     
     // Reset forms when modals are hidden
     var quickCompleteModal = document.getElementById('quickCompleteModal');
