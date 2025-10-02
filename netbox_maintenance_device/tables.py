@@ -10,8 +10,8 @@ class MaintenancePlanTable(NetBoxTable):
     name = tables.Column(linkify=True)
     maintenance_type = tables.Column()
     frequency_days = tables.Column(verbose_name='Frequency (days)')
-    next_maintenance = tables.Column(empty_values=(), verbose_name='Next Due')
-    status = tables.Column(empty_values=(), verbose_name='Status')
+    next_maintenance = tables.Column(empty_values=(), verbose_name='Next Due', orderable=False)
+    status = tables.Column(empty_values=(), verbose_name='Status', orderable=False)
     is_active = columns.BooleanColumn()
     
     class Meta(NetBoxTable.Meta):
