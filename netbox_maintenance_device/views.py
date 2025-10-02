@@ -66,26 +66,112 @@ class UpcomingMaintenanceView(generic.ObjectListView):
     template_name = 'netbox_maintenance_device/upcoming_maintenance.html'
     
     def get_queryset(self, request):
+        from django.db.models import (
+            Case, When, Value, IntegerField, Subquery, OuterRef, F, 
+            ExpressionWrapper, DateTimeField, DurationField
+        )
+        from django.db.models.functions import Cast, Coalesce, Extract
+        from datetime import timedelta
+        
         # Get all active maintenance plans
         queryset = super().get_queryset(request)
         
-        # Filter to show only plans that are due soon or overdue
-        from django.utils import timezone
-        today = timezone.now().date()
+        # Subquery to get the last completed execution date for each plan
+        last_execution = models.MaintenanceExecution.objects.filter(
+            maintenance_plan=OuterRef('pk'),
+            completed=True
+        ).order_by('-completed_date')
         
-        # For now, show all active plans - filtering can be done with proper due date logic
+        # Current time for calculations
+        now = timezone.now()
+        
+        # Annotate the queryset with calculated fields
+        queryset = queryset.annotate(
+            # Get last completed date
+            last_completed_date=Subquery(last_execution.values('completed_date')[:1]),
+            
+            # Calculate next maintenance date
+            # If there's a last execution, add frequency_days to it, otherwise add to created date
+            _next_due_date=Case(
+                When(
+                    last_completed_date__isnull=False,
+                    then=ExpressionWrapper(
+                        F('last_completed_date') + F('frequency_days') * timedelta(days=1),
+                        output_field=DateTimeField()
+                    )
+                ),
+                default=ExpressionWrapper(
+                    F('created') + F('frequency_days') * timedelta(days=1),
+                    output_field=DateTimeField()
+                ),
+                output_field=DateTimeField()
+            )
+        )
+        
+        # Second annotation for days_until calculation (depends on _next_due_date)
+        queryset = queryset.annotate(
+            # Calculate days until due (will be negative for overdue)
+            # Extract days from the duration
+            _days_until=Cast(
+                Extract(
+                    ExpressionWrapper(
+                        F('_next_due_date') - now,
+                        output_field=DurationField()
+                    ),
+                    'epoch'
+                ) / 86400,  # Convert seconds to days
+                output_field=IntegerField()
+            )
+        )
+        
+        # Third annotation for status priority (depends on _days_until)
+        queryset = queryset.annotate(
+            # Calculate status priority for sorting
+            # Overdue = 0, Due Soon (<=7 days) = 1, Upcoming = 2
+            _status_priority=Case(
+                When(_days_until__lt=0, then=Value(0)),  # Overdue (highest priority)
+                When(_days_until__lte=7, then=Value(1)), # Due Soon
+                default=Value(2),                         # Upcoming
+                output_field=IntegerField()
+            )
+        )
+        
         return queryset
     
     def get_extra_context(self, request):
         context = super().get_extra_context(request)
         
-        # Count overdue maintenance
+        # Calculate statistics for all plans
+        queryset = self.get_queryset(request)
+        
         overdue_count = 0
-        for plan in self.get_queryset(request):
-            if plan.is_overdue():
-                overdue_count += 1
+        due_soon_count = 0
+        upcoming_count = 0
+        on_track_count = 0
+        
+        for plan in queryset:
+            # Use annotated field if available
+            if hasattr(plan, '_days_until'):
+                days = plan._days_until
+            else:
+                days = plan.days_until_due()
+            
+            if days is not None:
+                if days < 0:
+                    overdue_count += 1
+                elif days <= 7:
+                    due_soon_count += 1
+                elif days <= 30:
+                    upcoming_count += 1
+                else:
+                    on_track_count += 1
         
         context['overdue_count'] = overdue_count
+        context['due_soon_count'] = due_soon_count
+        context['upcoming_count'] = upcoming_count
+        context['on_track_count'] = on_track_count
+        context['total_plans'] = queryset.count()
+        
         return context
 
 
@@ -127,12 +213,13 @@ def quick_complete_maintenance(request):
             execution.status = 'completed'
             execution.completed_date = timezone.now()
             execution.technician = technician
-            execution.notes = notes
+            if notes:
+                execution.notes = notes
             execution.save()
             
             return JsonResponse({
                 'success': True, 
-                'message': _('Maintenance execution completed successfully')
+                'message': str(_('Maintenance execution completed successfully'))
             })
             
         elif plan_id and device_id:
@@ -149,24 +236,26 @@ def quick_complete_maintenance(request):
                 completed_date=timezone.now(),
                 status='completed',
                 technician=technician,
-                notes=notes
+                notes=notes or 'Completed via quick action'
             )
             
             return JsonResponse({
                 'success': True, 
-                'message': _('Maintenance scheduled and completed successfully')
+                'message': str(_('Maintenance scheduled and completed successfully'))
             })
         else:
             return JsonResponse({
                 'success': False, 
-                'error': _('Missing required parameters')
-            })
+                'error': str(_('Missing required parameters'))
+            }, status=400)
             
     except Exception as e:
+        import traceback
         return JsonResponse({
             'success': False, 
-            'error': str(e)
-        })
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
 
 
 @require_http_methods(["POST"])
@@ -181,8 +270,8 @@ def schedule_maintenance(request):
         if not plan_id:
             return JsonResponse({
                 'success': False, 
-                'error': _('Missing maintenance plan ID')
-            })
+                'error': str(_('Missing maintenance plan ID'))
+            }, status=400)
         
         plan = get_object_or_404(models.MaintenancePlan, pk=plan_id)
         
@@ -203,17 +292,19 @@ def schedule_maintenance(request):
             scheduled_date=scheduled_datetime,
             status='scheduled',
             technician=technician,
-            notes=notes
+            notes=notes  # Don't add default note
         )
         
         return JsonResponse({
             'success': True, 
-            'message': _('Maintenance scheduled successfully'),
+            'message': str(_('Maintenance scheduled successfully')),
             'execution_id': execution.pk
         })
         
     except Exception as e:
+        import traceback
         return JsonResponse({
             'success': False, 
-            'error': str(e)
-        })
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
