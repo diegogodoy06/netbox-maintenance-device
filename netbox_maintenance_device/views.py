@@ -141,13 +141,37 @@ class UpcomingMaintenanceView(generic.ObjectListView):
     def get_extra_context(self, request):
         context = super().get_extra_context(request)
         
-        # Count overdue maintenance
+        # Calculate statistics for all plans
+        queryset = self.get_queryset(request)
+        
         overdue_count = 0
-        for plan in self.get_queryset(request):
-            if plan.is_overdue():
-                overdue_count += 1
+        due_soon_count = 0
+        upcoming_count = 0
+        on_track_count = 0
+        
+        for plan in queryset:
+            # Use annotated field if available
+            if hasattr(plan, '_days_until'):
+                days = plan._days_until
+            else:
+                days = plan.days_until_due()
+            
+            if days is not None:
+                if days < 0:
+                    overdue_count += 1
+                elif days <= 7:
+                    due_soon_count += 1
+                elif days <= 30:
+                    upcoming_count += 1
+                else:
+                    on_track_count += 1
         
         context['overdue_count'] = overdue_count
+        context['due_soon_count'] = due_soon_count
+        context['upcoming_count'] = upcoming_count
+        context['on_track_count'] = on_track_count
+        context['total_plans'] = queryset.count()
+        
         return context
 
 

@@ -316,3 +316,90 @@
 .maintenance-status-badge .mdi {
     margin-right: 4px;
 }
+
+/* Statistics Cards Styling */
+.card.border-danger {
+    border-width: 2px !important;
+    transition: all 0.3s ease;
+}
+
+.card.border-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.card.border-warning {
+    border-width: 2px !important;
+    transition: all 0.3s ease;
+}
+
+.card.border-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.card.border-info {
+    border-width: 2px !important;
+    transition: all 0.3s ease;
+}
+
+.card.border-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.card.border-success {
+    border-width: 2px !important;
+    transition: all 0.3s ease;
+}
+
+.card.border-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Statistics Card Content */
+.card-body h3 {
+    font-weight: 700;
+    font-size: 2rem;
+    margin: 0;
+}
+
+.card-body small {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Dark mode adjustments for stats cards */
+[data-bs-theme="dark"] .card.border-danger,
+.dark .card.border-danger {
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+[data-bs-theme="dark"] .card.border-warning,
+.dark .card.border-warning {
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+[data-bs-theme="dark"] .card.border-info,
+.dark .card.border-info {
+    background-color: rgba(23, 162, 184, 0.05);
+}
+
+[data-bs-theme="dark"] .card.border-success,
+.dark .card.border-success {
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .card-body h3 {
+        font-size: 1.5rem;
+    }
+    
+    .card-body small {
+        font-size: 0.7rem;
+    }
+}
