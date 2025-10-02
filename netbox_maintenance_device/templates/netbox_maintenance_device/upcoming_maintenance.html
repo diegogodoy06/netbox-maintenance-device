@@ -12,6 +12,54 @@
 {% block content %}
 <div class="row">
     <div class="col col-md-12">
+        <!-- Statistics Cards -->
+        <div class="row mb-3">
+            <div class="col-sm-6 col-lg-3 mb-2">
+                <div class="card border-danger">
+                    <div class="card-body text-center p-3">
+                        <div class="text-danger mb-1">
+                            <i class="mdi mdi-alert-circle mdi-24px"></i>
+                        </div>
+                        <h3 class="mb-1 text-danger">{{ overdue_count }}</h3>
+                        <small class="text-muted">{% trans "Overdue" %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 mb-2">
+                <div class="card border-warning">
+                    <div class="card-body text-center p-3">
+                        <div class="text-warning mb-1">
+                            <i class="mdi mdi-clock-alert mdi-24px"></i>
+                        </div>
+                        <h3 class="mb-1 text-warning">{{ due_soon_count }}</h3>
+                        <small class="text-muted">{% trans "Due Soon (≤7 days)" %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 mb-2">
+                <div class="card border-info">
+                    <div class="card-body text-center p-3">
+                        <div class="text-info mb-1">
+                            <i class="mdi mdi-calendar-clock mdi-24px"></i>
+                        </div>
+                        <h3 class="mb-1 text-info">{{ upcoming_count }}</h3>
+                        <small class="text-muted">{% trans "Upcoming (8-30 days)" %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 mb-2">
+                <div class="card border-success">
+                    <div class="card-body text-center p-3">
+                        <div class="text-success mb-1">
+                            <i class="mdi mdi-check-circle mdi-24px"></i>
+                        </div>
+                        <h3 class="mb-1 text-success">{{ on_track_count }}</h3>
+                        <small class="text-muted">{% trans "On Track (>30 days)" %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Overdue Maintenance Alert -->
         {% if overdue_count > 0 %}
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
