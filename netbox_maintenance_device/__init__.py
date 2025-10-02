@@ -5,7 +5,7 @@ class MaintenanceDeviceConfig(PluginConfig):
     name = 'netbox_maintenance_device'
     verbose_name = _('NetBox Device Maintenance')
     description = 'Manage device preventive and corrective maintenance with multilingual support'
-    version = '1.2.1'
+    version = '1.2.2'
     author = 'Diego Godoy'
     author_email = 'diegoalex-gdy@outlook.com'
     base_url = 'maintenance-device'
@@ -35,6 +35,6 @@ class MaintenanceDeviceConfig(PluginConfig):
         # to avoid issues during initial Django setup and collectstatic operations
         import logging
         logger = logging.getLogger(__name__)
-        logger.info("NetBox Maintenance Device v1.2.1 initialized successfully")
+        logger.info("NetBox Maintenance Device v1.2.2 initialized successfully")
 
 config = MaintenanceDeviceConfig
