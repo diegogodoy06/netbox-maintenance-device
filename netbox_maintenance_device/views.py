@@ -66,14 +66,76 @@ class UpcomingMaintenanceView(generic.ObjectListView):
     template_name = 'netbox_maintenance_device/upcoming_maintenance.html'
     
     def get_queryset(self, request):
+        from django.db.models import (
+            Case, When, Value, IntegerField, Subquery, OuterRef, F, 
+            ExpressionWrapper, DateTimeField, DurationField
+        )
+        from django.db.models.functions import Cast, Coalesce, Extract
+        from datetime import timedelta
+        
         # Get all active maintenance plans
         queryset = super().get_queryset(request)
         
-        # Filter to show only plans that are due soon or overdue
-        from django.utils import timezone
-        today = timezone.now().date()
+        # Subquery to get the last completed execution date for each plan
+        last_execution = models.MaintenanceExecution.objects.filter(
+            maintenance_plan=OuterRef('pk'),
+            completed=True
+        ).order_by('-completed_date')
         
-        # For now, show all active plans - filtering can be done with proper due date logic
+        # Current time for calculations
+        now = timezone.now()
+        
+        # Annotate the queryset with calculated fields
+        queryset = queryset.annotate(
+            # Get last completed date
+            last_completed_date=Subquery(last_execution.values('completed_date')[:1]),
+            
+            # Calculate next maintenance date
+            # If there's a last execution, add frequency_days to it, otherwise add to created date
+            _next_due_date=Case(
+                When(
+                    last_completed_date__isnull=False,
+                    then=ExpressionWrapper(
+                        F('last_completed_date') + F('frequency_days') * timedelta(days=1),
+                        output_field=DateTimeField()
+                    )
+                ),
+                default=ExpressionWrapper(
+                    F('created') + F('frequency_days') * timedelta(days=1),
+                    output_field=DateTimeField()
+                ),
+                output_field=DateTimeField()
+            )
+        )
+        
+        # Second annotation for days_until calculation (depends on _next_due_date)
+        queryset = queryset.annotate(
+            # Calculate days until due (will be negative for overdue)
+            # Extract days from the duration
+            _days_until=Cast(
+                Extract(
+                    ExpressionWrapper(
+                        F('_next_due_date') - now,
+                        output_field=DurationField()
+                    ),
+                    'epoch'
+                ) / 86400,  # Convert seconds to days
+                output_field=IntegerField()
+            )
+        )
+        
+        # Third annotation for status priority (depends on _days_until)
+        queryset = queryset.annotate(
+            # Calculate status priority for sorting
+            # Overdue = 0, Due Soon (<=7 days) = 1, Upcoming = 2
+            _status_priority=Case(
+                When(_days_until__lt=0, then=Value(0)),  # Overdue (highest priority)
+                When(_days_until__lte=7, then=Value(1)), # Due Soon
+                default=Value(2),                         # Upcoming
+                output_field=IntegerField()
+            )
+        )
+        
         return queryset
     
     def get_extra_context(self, request):

@@ -64,9 +64,9 @@ class UpcomingMaintenanceTable(NetBoxTable):
     device = tables.Column(linkify=True)
     name = tables.Column(linkify=True)
     maintenance_type = tables.Column()
-    next_due = tables.Column(empty_values=(), verbose_name='Next Due', order_by=('device', 'name'))
-    days_until = tables.Column(empty_values=(), verbose_name='Days Until Due', order_by=('device', 'name'))
-    status = tables.Column(empty_values=(), verbose_name='Status', order_by=('is_active', 'device'))
+    next_due = tables.Column(empty_values=(), verbose_name='Next Due', order_by='_next_due_date')
+    days_until = tables.Column(empty_values=(), verbose_name='Days Until Due', order_by='_days_until')
+    status = tables.Column(empty_values=(), verbose_name='Status', order_by='_status_priority')
     actions = tables.Column(empty_values=(), verbose_name='Actions', orderable=False)
     
     class Meta(NetBoxTable.Meta):
@@ -77,13 +77,22 @@ class UpcomingMaintenanceTable(NetBoxTable):
                           'days_until', 'status', 'actions')
     
     def render_next_due(self, record):
+        # Try to use annotated field first, fallback to method
+        if hasattr(record, '_next_due_date') and record._next_due_date:
+            return record._next_due_date.strftime('%Y-%m-%d')
+        
         next_date = record.get_next_maintenance_date()
         if next_date:
             return next_date.strftime('%Y-%m-%d')
         return '-'
     
     def render_days_until(self, record):
-        days = record.days_until_due()
+        # Try to use annotated field first, fallback to method
+        if hasattr(record, '_days_until'):
+            days = record._days_until
+        else:
+            days = record.days_until_due()
+        
         if days is not None:
             if days < 0:
                 return format_html('<span class="text-danger"><i class="mdi mdi-alert-circle"></i> {} days overdue</span>', abs(days))
@@ -94,12 +103,16 @@ class UpcomingMaintenanceTable(NetBoxTable):
         return '-'
     
     def render_status(self, record):
-        if record.is_overdue():
-            return format_html('<span class="badge badge-danger"><i class="mdi mdi-alert-circle"></i> Overdue</span>')
+        # Use annotated field if available, otherwise calculate
+        if hasattr(record, '_days_until'):
+            days = record._days_until
+        else:
+            days = record.days_until_due()
         
-        days_until = record.days_until_due()
-        if days_until is not None:
-            if days_until <= 7:
+        if days is not None:
+            if days < 0:
+                return format_html('<span class="badge badge-danger"><i class="mdi mdi-alert-circle"></i> Overdue</span>')
+            elif days <= 7:
                 return format_html('<span class="badge badge-warning"><i class="mdi mdi-clock-alert"></i> Due Soon</span>')
             else:
                 return format_html('<span class="badge badge-info">Upcoming</span>')
