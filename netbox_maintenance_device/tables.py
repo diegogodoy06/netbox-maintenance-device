@@ -142,15 +142,19 @@ class UpcomingMaintenanceTable(NetBoxTable):
             '</button>'.format(record.pk, plan_name)
         )
         
-        # Complete button - apenas para manutenções vencidas ou próximas
-        if days_until is not None and days_until <= 7:
+        # Complete button - apenas se houver agendamento pendente (scheduled ou in_progress)
+        pending_execution = record.executions.filter(
+            status__in=['scheduled', 'in_progress']
+        ).order_by('scheduled_date').first()
+        
+        if pending_execution:
             actions.append(
                 '<button type="button" class="btn btn-sm btn-success quick-complete-btn maintenance-action-btn" '
-                'data-plan-id="{}" data-device-id="{}" data-plan-name="{}" '
-                'title="Complete Maintenance" '
+                'data-execution-id="{}" data-plan-name="{}" '
+                'title="Complete Scheduled Maintenance" '
                 'onclick="return false;">'
                 '<i class="mdi mdi-check-circle"></i> Complete'
-                '</button>'.format(record.pk, record.device.pk, plan_name)
+                '</button>'.format(pending_execution.pk, plan_name)
             )
         
         return format_html(' '.join(actions)) if actions else '-'
