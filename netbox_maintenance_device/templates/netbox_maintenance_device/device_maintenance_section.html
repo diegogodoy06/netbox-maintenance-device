@@ -37,15 +37,16 @@
                                                     title="{% trans 'Schedule Maintenance' %}">
                                                 <i class="mdi mdi-calendar-plus"></i>
                                             </button>
-                                            {% if plan.is_overdue or plan.days_until_due and plan.days_until_due <= 7 %}
+                                            {% with pending_execution=plan.executions.filter|status__in=['scheduled', 'in_progress']|order_by['scheduled_date']|first %}
+                                            {% if pending_execution %}
                                                 <button type="button" class="btn btn-outline-success btn-sm complete-btn" 
-                                                        data-plan-id="{{ plan.pk }}" 
-                                                        data-device-id="{{ device.pk }}" 
+                                                        data-execution-id="{{ pending_execution.pk }}" 
                                                         data-plan-name="{{ plan.name }}"
-                                                        title="{% trans 'Complete Now' %}">
+                                                        title="{% trans 'Complete Scheduled Maintenance' %}">
                                                     <i class="mdi mdi-check-circle"></i>
                                                 </button>
                                             {% endif %}
+                                            {% endwith %}
                                         </div>
                                     </div>
                                 </li>
@@ -98,9 +99,6 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">{% trans "Schedule Maintenance" %}</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
             </div>
             <div class="modal-body">
                 <form id="scheduleMaintenanceForm">
@@ -137,15 +135,11 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">{% trans "Complete Maintenance" %}</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
             </div>
             <div class="modal-body">
                 <form id="completeMaintenanceForm">
                     {% csrf_token %}
-                    <input type="hidden" id="completePlanId" name="plan_id">
-                    <input type="hidden" id="completeDeviceId" name="device_id">
+                    <input type="hidden" id="completeExecutionId" name="execution_id">
                     <div class="form-group">
                         <label for="completeTechnician">{% trans "Technician" %}</label>
                         <input type="text" class="form-control" id="completeTechnician" name="technician" 
@@ -263,12 +257,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('.complete-btn')) {
             e.preventDefault();
             const btn = e.target.closest('.complete-btn');
-            const planId = btn.dataset.planId;
-            const deviceId = btn.dataset.deviceId;
+            const executionId = btn.dataset.executionId;
             const planName = btn.dataset.planName;
             
-            document.getElementById('completePlanId').value = planId;
-            document.getElementById('completeDeviceId').value = deviceId;
+            document.getElementById('completeExecutionId').value = executionId;
             document.querySelector('#completeMaintenanceModal .modal-title').textContent = '{% trans "Complete Maintenance" %}: ' + planName;
             
             showModal('completeMaintenanceModal');
