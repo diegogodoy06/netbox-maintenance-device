@@ -23,12 +23,24 @@ class DeviceMaintenanceExtension(PluginTemplateExtension):
                 maintenance_plan__device=device
             ).order_by('-scheduled_date')[:5]
             
-            # Count maintenance status
+            # Count maintenance status and add pending execution info
             overdue_count = 0
             due_soon_count = 0
             total_active = 0
             
+            # Enrich plans with pending execution information
+            plans_with_execution = []
             for plan in maintenance_plans:
+                # Get pending execution for this plan
+                pending_execution = models.MaintenanceExecution.objects.filter(
+                    maintenance_plan=plan,
+                    status__in=['scheduled', 'in_progress']
+                ).order_by('scheduled_date').first()
+                
+                # Add pending execution as attribute to the plan object
+                plan.pending_execution = pending_execution
+                plans_with_execution.append(plan)
+                
                 if plan.is_active:
                     total_active += 1
                     if plan.is_overdue():
@@ -39,7 +51,7 @@ class DeviceMaintenanceExtension(PluginTemplateExtension):
                             due_soon_count += 1
             
             return {
-                'maintenance_plans': maintenance_plans,
+                'maintenance_plans': plans_with_execution,
                 'recent_executions': recent_executions,
                 'overdue_count': overdue_count,
                 'due_soon_count': due_soon_count,
