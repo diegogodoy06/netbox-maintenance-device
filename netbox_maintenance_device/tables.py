@@ -122,26 +122,33 @@ class UpcomingMaintenanceTable(NetBoxTable):
     def render_actions(self, record):
         from django.utils.html import escape
         actions = []
-        days_until = record.days_until_due()
+        
+        # Use annotated field if available, otherwise calculate
+        if hasattr(record, '_days_until'):
+            days_until = record._days_until
+        else:
+            days_until = record.days_until_due()
         
         # Escape plan name to prevent issues with special characters
         plan_name = escape(record.name)
         
         # Schedule button - sempre disponível para planos ativos
         actions.append(
-            '<button type="button" class="btn btn-sm btn-outline-primary schedule-btn mr-1" '
+            '<button type="button" class="btn btn-sm btn-outline-primary schedule-btn mr-1 maintenance-action-btn" '
             'data-plan-id="{}" data-plan-name="{}" '
-            'title="Schedule Maintenance">'
+            'title="Schedule Maintenance" '
+            'onclick="return false;">'
             '<i class="mdi mdi-calendar-plus"></i> Schedule'
             '</button>'.format(record.pk, plan_name)
         )
         
         # Complete button - apenas para manutenções vencidas ou próximas
-        if record.is_overdue() or (days_until is not None and days_until <= 7):
+        if days_until is not None and days_until <= 7:
             actions.append(
-                '<button type="button" class="btn btn-sm btn-success quick-complete-btn" '
+                '<button type="button" class="btn btn-sm btn-success quick-complete-btn maintenance-action-btn" '
                 'data-plan-id="{}" data-device-id="{}" data-plan-name="{}" '
-                'title="Complete Maintenance">'
+                'title="Complete Maintenance" '
+                'onclick="return false;">'
                 '<i class="mdi mdi-check-circle"></i> Complete'
                 '</button>'.format(record.pk, record.device.pk, plan_name)
             )
