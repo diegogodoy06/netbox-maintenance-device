@@ -7,10 +7,6 @@
 <link rel="stylesheet" href="{% static 'netbox_maintenance_device/css/maintenance.css' %}">
 {% endblock %}
 
-{% block extra_head %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-{% endblock %}
-
 {% block title %}{% trans "Upcoming & Overdue Maintenance" %}{% endblock %}
 
 {% block content %}
@@ -124,7 +120,9 @@
 </div>
 
 <script>
-$(document).ready(function() {
+(function($) {
+    'use strict';
+    
     // Setup CSRF token for AJAX requests
     function getCookie(name) {
         var cookieValue = null;
@@ -141,46 +139,67 @@ $(document).ready(function() {
         return cookieValue;
     }
     
-    var csrftoken = getCookie('csrftoken');
-    
-    $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
-            if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
-                // Only send the token to relative URLs i.e. locally.
-                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+    function setupMaintenanceHandlers() {
+        console.log('Setting up maintenance action handlers');
+        
+        var csrftoken = getCookie('csrftoken');
+        
+        // Setup AJAX with CSRF token
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
             }
-        }
-    });
-    
-    // Handle quick completion
-    $(document).on('click', '.quick-complete-btn', function(e) {
-        e.preventDefault();
-        var planId = $(this).data('plan-id');
-        var deviceId = $(this).data('device-id');
-        var planName = $(this).data('plan-name');
+        });
         
-        $('#planId').val(planId);
-        $('#deviceId').val(deviceId);
-        $('#quickCompleteModal .modal-title').text('{% trans "Complete Maintenance" %}: ' + planName);
-        $('#quickCompleteModal').modal('show');
-    });
-    
-    // Handle schedule maintenance
-    $(document).on('click', '.schedule-btn', function(e) {
-        e.preventDefault();
-        var planId = $(this).data('plan-id');
-        var planName = $(this).data('plan-name');
+        // Handle quick completion - use event delegation
+        $(document).off('click', '.quick-complete-btn').on('click', '.quick-complete-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Quick complete button clicked');
+            
+            var $btn = $(this);
+            var planId = $btn.data('plan-id');
+            var deviceId = $btn.data('device-id');
+            var planName = $btn.data('plan-name');
+            
+            console.log('Plan ID:', planId, 'Device ID:', deviceId, 'Plan Name:', planName);
+            
+            $('#planId').val(planId);
+            $('#deviceId').val(deviceId);
+            $('#quickCompleteModal .modal-title').text('{% trans "Complete Maintenance" %}: ' + planName);
+            $('#quickCompleteModal').modal('show');
+            
+            return false;
+        });
         
-        $('#schedulePlanId').val(planId);
-        $('#scheduleModal .modal-title').text('{% trans "Schedule Maintenance" %}: ' + planName);
-        
-        // Set default date to tomorrow
-        var tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        $('#scheduledDate').val(tomorrow.toISOString().split('T')[0]);
-        
-        $('#scheduleModal').modal('show');
-    });
+        // Handle schedule maintenance - use event delegation
+        $(document).off('click', '.schedule-btn').on('click', '.schedule-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Schedule button clicked');
+            
+            var $btn = $(this);
+            var planId = $btn.data('plan-id');
+            var planName = $btn.data('plan-name');
+            
+            console.log('Plan ID:', planId, 'Plan Name:', planName);
+            
+            $('#schedulePlanId').val(planId);
+            $('#scheduleModal .modal-title').text('{% trans "Schedule Maintenance" %}: ' + planName);
+            
+            // Set default date to tomorrow
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            $('#scheduledDate').val(tomorrow.toISOString().split('T')[0]);
+            
+            $('#scheduleModal').modal('show');
+            
+            return false;
+        });
     
     // Handle complete form submission
     $('#confirmComplete').click(function() {
@@ -236,16 +255,28 @@ $(document).ready(function() {
         });
     });
     
-    // Reset forms when modals are hidden
-    $('#quickCompleteModal').on('hidden.bs.modal', function() {
-        $('#quickCompleteForm')[0].reset();
-        $('#confirmComplete').prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
+        // Reset forms when modals are hidden
+        $('#quickCompleteModal').on('hidden.bs.modal', function() {
+            $('#quickCompleteForm')[0].reset();
+            $('#confirmComplete').prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
+        });
+        
+        $('#scheduleModal').on('hidden.bs.modal', function() {
+            $('#scheduleForm')[0].reset();
+            $('#confirmSchedule').prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
+        });
+        
+        console.log('Maintenance handlers setup complete');
+    }
+    
+    // Initialize on DOM ready and after any AJAX table updates
+    $(document).ready(function() {
+        setupMaintenanceHandlers();
     });
     
-    $('#scheduleModal').on('hidden.bs.modal', function() {
-        $('#scheduleForm')[0].reset();
-        $('#confirmSchedule').prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
-    });
-});
+    // Re-initialize after table reloads (for pagination, sorting, etc.)
+    $(document).on('DOMContentLoaded', setupMaintenanceHandlers);
+    
+})(jQuery);
 </script>
 {% endblock %}
