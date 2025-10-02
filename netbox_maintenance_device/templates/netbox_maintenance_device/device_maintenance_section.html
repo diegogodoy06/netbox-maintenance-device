@@ -37,16 +37,14 @@
                                                     title="{% trans 'Schedule Maintenance' %}">
                                                 <i class="mdi mdi-calendar-plus"></i>
                                             </button>
-                                            {% with pending_execution=plan.executions.filter|status__in=['scheduled', 'in_progress']|order_by['scheduled_date']|first %}
-                                            {% if pending_execution %}
+                                            {% if plan.pending_execution %}
                                                 <button type="button" class="btn btn-outline-success btn-sm complete-btn" 
-                                                        data-execution-id="{{ pending_execution.pk }}" 
+                                                        data-execution-id="{{ plan.pending_execution.pk }}" 
                                                         data-plan-name="{{ plan.name }}"
                                                         title="{% trans 'Complete Scheduled Maintenance' %}">
                                                     <i class="mdi mdi-check-circle"></i>
                                                 </button>
                                             {% endif %}
-                                            {% endwith %}
                                         </div>
                                     </div>
                                 </li>
