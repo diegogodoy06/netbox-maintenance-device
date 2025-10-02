@@ -120,27 +120,36 @@
 </div>
 
 <script>
-(function($) {
+// Wait for jQuery to be available
+(function() {
     'use strict';
     
-    // Setup CSRF token for AJAX requests
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
+    function initMaintenanceActions() {
+        // Check if jQuery is available
+        if (typeof jQuery === 'undefined') {
+            console.log('jQuery not yet loaded, retrying...');
+            setTimeout(initMaintenanceActions, 100);
+            return;
+        }
+        
+        var $ = jQuery;
+        console.log('jQuery loaded, initializing maintenance action handlers');
+        
+        // Setup CSRF token for AJAX requests
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
                 }
             }
+            return cookieValue;
         }
-        return cookieValue;
-    }
-    
-    function setupMaintenanceHandlers() {
-        console.log('Setting up maintenance action handlers');
         
         var csrftoken = getCookie('csrftoken');
         
@@ -153,8 +162,12 @@
             }
         });
         
+        // Remove any existing handlers to avoid duplicates
+        $(document).off('click', '.quick-complete-btn');
+        $(document).off('click', '.schedule-btn');
+        
         // Handle quick completion - use event delegation
-        $(document).off('click', '.quick-complete-btn').on('click', '.quick-complete-btn', function(e) {
+        $(document).on('click', '.quick-complete-btn', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -176,7 +189,7 @@
         });
         
         // Handle schedule maintenance - use event delegation
-        $(document).off('click', '.schedule-btn').on('click', '.schedule-btn', function(e) {
+        $(document).on('click', '.schedule-btn', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -266,17 +279,16 @@
             $('#confirmSchedule').prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
         });
         
-        console.log('Maintenance handlers setup complete');
+        console.log('Maintenance action handlers initialized successfully');
     }
     
-    // Initialize on DOM ready and after any AJAX table updates
-    $(document).ready(function() {
-        setupMaintenanceHandlers();
-    });
-    
-    // Re-initialize after table reloads (for pagination, sorting, etc.)
-    $(document).on('DOMContentLoaded', setupMaintenanceHandlers);
-    
-})(jQuery);
+    // Start initialization
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMaintenanceActions);
+    } else {
+        // DOM is already loaded
+        initMaintenanceActions();
+    }
+})();
 </script>
 {% endblock %}
