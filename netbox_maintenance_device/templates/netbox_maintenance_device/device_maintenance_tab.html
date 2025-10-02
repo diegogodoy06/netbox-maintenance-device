@@ -215,9 +215,6 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">{% trans "Complete Maintenance" %}</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
             </div>
             <div class="modal-body">
                 <form id="quickCompleteForm">
@@ -244,46 +241,164 @@
 </div>
 
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
+    // Get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    // Modal helper functions
+    function showModal(modalId) {
+        const modalEl = document.getElementById(modalId);
+        if (!modalEl) return;
+        
+        // Try Bootstrap 5 first
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+        // Then Bootstrap 4
+        else if (typeof $ !== 'undefined' && $.fn.modal) {
+            $(modalEl).modal('show');
+        }
+        // Fallback to manual display
+        else {
+            modalEl.style.display = 'block';
+            modalEl.classList.add('show');
+            document.body.classList.add('modal-open');
+            
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.id = modalId + '-backdrop';
+            document.body.appendChild(backdrop);
+        }
+    }
+    
+    function hideModal(modalId) {
+        const modalEl = document.getElementById(modalId);
+        if (!modalEl) return;
+        
+        // Try Bootstrap 5 first
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }
+        // Then Bootstrap 4
+        else if (typeof $ !== 'undefined' && $.fn.modal) {
+            $(modalEl).modal('hide');
+        }
+        // Fallback to manual hide
+        else {
+            modalEl.style.display = 'none';
+            modalEl.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            const backdrop = document.getElementById(modalId + '-backdrop');
+            if (backdrop) backdrop.remove();
+        }
+    }
+    
     // Handle quick completion for maintenance plans
-    $('.quick-complete').click(function() {
-        var planId = $(this).data('plan-id');
-        var deviceId = $(this).data('device-id');
-        $('#planId').val(planId);
-        $('#deviceId').val(deviceId);
-        $('#executionId').val('');
-        $('#quickCompleteModal').modal('show');
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.quick-complete')) {
+            e.preventDefault();
+            const btn = e.target.closest('.quick-complete');
+            const planId = btn.dataset.planId;
+            const deviceId = btn.dataset.deviceId;
+            
+            document.getElementById('planId').value = planId;
+            document.getElementById('deviceId').value = deviceId;
+            document.getElementById('executionId').value = '';
+            showModal('quickCompleteModal');
+        }
     });
     
     // Handle completion for existing executions
-    $('.complete-execution').click(function() {
-        var executionId = $(this).data('execution-id');
-        $('#executionId').val(executionId);
-        $('#planId').val('');
-        $('#deviceId').val('');
-        $('#quickCompleteModal').modal('show');
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.complete-execution')) {
+            e.preventDefault();
+            const btn = e.target.closest('.complete-execution');
+            const executionId = btn.dataset.executionId;
+            
+            document.getElementById('executionId').value = executionId;
+            document.getElementById('planId').value = '';
+            document.getElementById('deviceId').value = '';
+            showModal('quickCompleteModal');
+        }
+    });
+    
+    // Handle modal close buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-dismiss="modal"]') || e.target.closest('[data-dismiss="modal"]')) {
+            const modal = e.target.closest('.modal');
+            if (modal) {
+                hideModal(modal.id);
+            }
+        }
     });
     
     // Handle form submission
-    $('#confirmComplete').click(function() {
-        var formData = $('#quickCompleteForm').serialize();
-        
-        $.ajax({
-            url: '{% url "plugins:netbox_maintenance_device:quick_complete" %}',
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.success) {
+    const confirmCompleteBtn = document.getElementById('confirmComplete');
+    if (confirmCompleteBtn) {
+        confirmCompleteBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> {% trans "Processing..." %}';
+            
+            const form = document.getElementById('quickCompleteForm');
+            const formData = new FormData(form);
+            
+            fetch('{% url "plugins:netbox_maintenance_device:quick_complete" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
                     location.reload();
                 } else {
-                    alert('{% trans "Error completing maintenance" %}: ' + response.error);
+                    alert('{% trans "Error completing maintenance" %}: ' + data.error);
+                    this.disabled = false;
+                    this.innerHTML = '{% trans "Complete Maintenance" %}';
                 }
-            },
-            error: function() {
-                alert('{% trans "Error completing maintenance" %}');
-            }
+            })
+            .catch(error => {
+                let errorMsg = '{% trans "Error completing maintenance" %}';
+                if (error.responseJSON && error.responseJSON.error) {
+                    errorMsg += ': ' + error.responseJSON.error;
+                }
+                alert(errorMsg);
+                this.disabled = false;
+                this.innerHTML = '{% trans "Complete Maintenance" %}';
+            });
         });
-    });
+    }
+    
+    // Reset form when modal is hidden
+    const quickCompleteModal = document.getElementById('quickCompleteModal');
+    if (quickCompleteModal) {
+        quickCompleteModal.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('quickCompleteForm').reset();
+            const btn = document.getElementById('confirmComplete');
+            btn.disabled = false;
+            btn.innerHTML = '{% trans "Complete Maintenance" %}';
+        });
+    }
 });
 </script>
 </div>

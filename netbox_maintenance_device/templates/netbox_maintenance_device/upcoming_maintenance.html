@@ -12,6 +12,54 @@
 {% block content %}
 <div class="row">
     <div class="col col-md-12">
+        <!-- Statistics Cards -->
+        <div class="row mb-3">
+            <div class="col-sm-6 col-lg-3 mb-2">
+                <div class="card border-danger">
+                    <div class="card-body text-center p-3">
+                        <div class="text-danger mb-1">
+                            <i class="mdi mdi-alert-circle mdi-24px"></i>
+                        </div>
+                        <h3 class="mb-1 text-danger">{{ overdue_count }}</h3>
+                        <small class="text-muted">{% trans "Overdue" %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 mb-2">
+                <div class="card border-warning">
+                    <div class="card-body text-center p-3">
+                        <div class="text-warning mb-1">
+                            <i class="mdi mdi-clock-alert mdi-24px"></i>
+                        </div>
+                        <h3 class="mb-1 text-warning">{{ due_soon_count }}</h3>
+                        <small class="text-muted">{% trans "Due Soon (≤7 days)" %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 mb-2">
+                <div class="card border-info">
+                    <div class="card-body text-center p-3">
+                        <div class="text-info mb-1">
+                            <i class="mdi mdi-calendar-clock mdi-24px"></i>
+                        </div>
+                        <h3 class="mb-1 text-info">{{ upcoming_count }}</h3>
+                        <small class="text-muted">{% trans "Upcoming (8-30 days)" %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3 mb-2">
+                <div class="card border-success">
+                    <div class="card-body text-center p-3">
+                        <div class="text-success mb-1">
+                            <i class="mdi mdi-check-circle mdi-24px"></i>
+                        </div>
+                        <h3 class="mb-1 text-success">{{ on_track_count }}</h3>
+                        <small class="text-muted">{% trans "On Track (>30 days)" %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Overdue Maintenance Alert -->
         {% if overdue_count > 0 %}
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -50,13 +98,11 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">{% trans "Complete Maintenance" %}</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
             </div>
             <div class="modal-body">
                 <form id="quickCompleteForm">
                     {% csrf_token %}
+                    <input type="hidden" id="executionId" name="execution_id">
                     <input type="hidden" id="planId" name="plan_id">
                     <input type="hidden" id="deviceId" name="device_id">
                     <div class="form-group">
@@ -86,9 +132,6 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">{% trans "Schedule Maintenance" %}</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
             </div>
             <div class="modal-body">
                 <form id="scheduleForm">
@@ -120,99 +163,269 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    // Handle quick completion
-    $(document).on('click', '.quick-complete-btn', function() {
-        var planId = $(this).data('plan-id');
-        var deviceId = $(this).data('device-id');
-        var planName = $(this).data('plan-name');
-        
-        $('#planId').val(planId);
-        $('#deviceId').val(deviceId);
-        $('.modal-title').text('{% trans "Complete Maintenance" %}: ' + planName);
-        $('#quickCompleteModal').modal('show');
-    });
+// Use vanilla JavaScript - no jQuery dependency
+(function() {
+    'use strict';
     
-    // Handle schedule maintenance
-    $(document).on('click', '.schedule-btn', function() {
-        var planId = $(this).data('plan-id');
-        var planName = $(this).data('plan-name');
+    console.log('Initializing maintenance action handlers (vanilla JS)');
+    
+    // Setup CSRF token for AJAX requests
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    var csrftoken = getCookie('csrftoken');
+    
+    // Helper to show modal using Bootstrap's API
+    function showModal(modalId) {
+        var modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            // Try Bootstrap 5 first
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                var modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            } 
+            // Try Bootstrap 4 / jQuery fallback
+            else if (typeof jQuery !== 'undefined') {
+                jQuery('#' + modalId).modal('show');
+            }
+            // Fallback: just show it
+            else {
+                modalEl.style.display = 'block';
+                modalEl.classList.add('show');
+                document.body.classList.add('modal-open');
+                // Add backdrop
+                var backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = modalId + '-backdrop';
+                document.body.appendChild(backdrop);
+            }
+        }
+    }
+    
+    // Helper to hide modal
+    function hideModal(modalId) {
+        var modalEl = document.getElementById(modalId);
+        if (modalEl) {
+            // Try Bootstrap 5 first
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
+            // Try Bootstrap 4 / jQuery fallback
+            else if (typeof jQuery !== 'undefined') {
+                jQuery('#' + modalId).modal('hide');
+            }
+            // Fallback: just hide it
+            else {
+                modalEl.style.display = 'none';
+                modalEl.classList.remove('show');
+                document.body.classList.remove('modal-open');
+                // Remove backdrop
+                var backdrop = document.getElementById(modalId + '-backdrop');
+                if (backdrop) backdrop.remove();
+            }
+        }
+    }
+    
+    // Handle quick completion button clicks
+    document.addEventListener('click', function(e) {
+        var target = e.target;
         
-        $('#schedulePlanId').val(planId);
-        $('.modal-title').text('{% trans "Schedule Maintenance" %}: ' + planName);
-        
-        // Set default date to tomorrow
-        var tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        $('#scheduledDate').val(tomorrow.toISOString().split('T')[0]);
-        
-        $('#scheduleModal').modal('show');
+        // Handle clicks on button or its children (icon)
+        while (target && target !== document) {
+            if (target.classList && target.classList.contains('quick-complete-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('Quick complete button clicked');
+                
+                var executionId = target.getAttribute('data-execution-id');
+                var planName = target.getAttribute('data-plan-name');
+                
+                console.log('Execution ID:', executionId, 'Plan Name:', planName);
+                
+                // Set form values
+                var executionIdInput = document.getElementById('executionId');
+                var modalTitle = document.querySelector('#quickCompleteModal .modal-title');
+                
+                if (executionIdInput) executionIdInput.value = executionId;
+                if (modalTitle) modalTitle.textContent = '{% trans "Complete Maintenance" %}: ' + planName;
+                
+                // Clear plan_id and device_id since we're completing an existing execution
+                var planIdInput = document.getElementById('planId');
+                var deviceIdInput = document.getElementById('deviceId');
+                if (planIdInput) planIdInput.value = '';
+                if (deviceIdInput) deviceIdInput.value = '';
+                
+                // Show modal
+                showModal('quickCompleteModal');
+                
+                return false;
+            }
+            
+            if (target.classList && target.classList.contains('schedule-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('Schedule button clicked');
+                
+                var planId = target.getAttribute('data-plan-id');
+                var planName = target.getAttribute('data-plan-name');
+                
+                console.log('Plan ID:', planId, 'Plan Name:', planName);
+                
+                // Set form values
+                var schedulePlanIdInput = document.getElementById('schedulePlanId');
+                var modalTitle = document.querySelector('#scheduleModal .modal-title');
+                var scheduledDateInput = document.getElementById('scheduledDate');
+                
+                if (schedulePlanIdInput) schedulePlanIdInput.value = planId;
+                if (modalTitle) modalTitle.textContent = '{% trans "Schedule Maintenance" %}: ' + planName;
+                
+                // Set default date to tomorrow
+                if (scheduledDateInput) {
+                    var tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    scheduledDateInput.value = tomorrow.toISOString().split('T')[0];
+                }
+                
+                // Show modal
+                showModal('scheduleModal');
+                
+                return false;
+            }
+            
+            target = target.parentElement;
+        }
     });
     
     // Handle complete form submission
-    $('#confirmComplete').click(function() {
-        var $btn = $(this);
-        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> {% trans "Processing..." %}');
-        
-        var formData = $('#quickCompleteForm').serialize();
-        
-        $.ajax({
-            url: '{% url "plugins:netbox_maintenance_device:quick_complete" %}',
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.success) {
-                    $('#quickCompleteModal').modal('hide');
+    var confirmCompleteBtn = document.getElementById('confirmComplete');
+    if (confirmCompleteBtn) {
+        confirmCompleteBtn.addEventListener('click', function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> {% trans "Processing..." %}';
+            
+            var form = document.getElementById('quickCompleteForm');
+            var formData = new FormData(form);
+            
+            fetch('{% url "plugins:netbox_maintenance_device:quick_complete" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
                     location.reload();
                 } else {
-                    alert('{% trans "Error completing maintenance" %}: ' + response.error);
-                    $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
+                    alert('{% trans "Error completing maintenance" %}: ' + data.error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}';
                 }
-            },
-            error: function() {
+            })
+            .catch(error => {
                 alert('{% trans "Error completing maintenance. Please try again." %}');
-                $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
-            }
+                btn.disabled = false;
+                btn.innerHTML = '<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}';
+            });
         });
-    });
+    }
     
     // Handle schedule form submission
-    $('#confirmSchedule').click(function() {
-        var $btn = $(this);
-        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> {% trans "Scheduling..." %}');
-        
-        var formData = $('#scheduleForm').serialize();
-        
-        $.ajax({
-            url: '{% url "plugins:netbox_maintenance_device:schedule_maintenance" %}',
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.success) {
-                    $('#scheduleModal').modal('hide');
+    var confirmScheduleBtn = document.getElementById('confirmSchedule');
+    if (confirmScheduleBtn) {
+        confirmScheduleBtn.addEventListener('click', function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> {% trans "Scheduling..." %}';
+            
+            var form = document.getElementById('scheduleForm');
+            var formData = new FormData(form);
+            
+            fetch('{% url "plugins:netbox_maintenance_device:schedule_maintenance" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
                     location.reload();
                 } else {
-                    alert('{% trans "Error scheduling maintenance" %}: ' + response.error);
-                    $btn.prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
+                    alert('{% trans "Error scheduling maintenance" %}: ' + data.error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}';
                 }
-            },
-            error: function() {
+            })
+            .catch(error => {
                 alert('{% trans "Error scheduling maintenance. Please try again." %}');
-                $btn.prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
-            }
+                btn.disabled = false;
+                btn.innerHTML = '<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}';
+            });
         });
+    }
+    
+    // Handle close buttons for modals
+    document.addEventListener('click', function(e) {
+        var target = e.target;
+        
+        // Check if clicked on close button or X button
+        if (target.getAttribute('data-dismiss') === 'modal' || 
+            target.closest('[data-dismiss="modal"]')) {
+            e.preventDefault();
+            
+            // Find the modal
+            var modal = target.closest('.modal');
+            if (modal) {
+                hideModal(modal.id);
+            }
+        }
     });
     
     // Reset forms when modals are hidden
-    $('#quickCompleteModal').on('hidden.bs.modal', function() {
-        $('#quickCompleteForm')[0].reset();
-        $('#confirmComplete').prop('disabled', false).html('<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}');
-    });
+    var quickCompleteModal = document.getElementById('quickCompleteModal');
+    if (quickCompleteModal) {
+        quickCompleteModal.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('quickCompleteForm').reset();
+            var btn = document.getElementById('confirmComplete');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="mdi mdi-check"></i> {% trans "Complete Maintenance" %}';
+            }
+        });
+    }
     
-    $('#scheduleModal').on('hidden.bs.modal', function() {
-        $('#scheduleForm')[0].reset();
-        $('#confirmSchedule').prop('disabled', false).html('<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}');
-    });
-});
+    var scheduleModalEl = document.getElementById('scheduleModal');
+    if (scheduleModalEl) {
+        scheduleModalEl.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('scheduleForm').reset();
+            var btn = document.getElementById('confirmSchedule');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="mdi mdi-calendar-plus"></i> {% trans "Schedule Maintenance" %}';
+            }
+        });
+    }
+    
+    console.log('Maintenance action handlers initialized successfully');
+})();
 </script>
 {% endblock %}
