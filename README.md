@@ -2,7 +2,7 @@
 
 [![NetBox](https://img.shields.io/badge/NetBox-4.0%2B-orange)](https://netbox.dev/)
 [![PyPI](https://img.shields.io/pypi/v/netbox-maintenance-device)](https://pypi.org/project/netbox-maintenance-device/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/netbox-maintenance-device)](https://pypi.org/project/netbox-maintenance-device/)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/netbox-maintenance-device?period=total&units=ABBREVIATION&left_color=GREY&right_color=BLUE&left_text=downloads)](https://pepy.tech/projects/netbox-maintenance-device)
 [![Language](https://img.shields.io/badge/Language-EN%20%7C%20PT--BR-brightgreen)](README.md)
 
 A comprehensive NetBox plugin for managing device preventive and corrective maintenance with enhanced visual indicators, scheduling capabilities, and multi-language support.
