@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-01-14
+
+### Added
+- **NetBox 4.5.x Compatibility**: Full compatibility with NetBox 4.5.0 and later
+  - Verified compatibility with NetBox 4.5.x plugin API changes
+  - No deprecated imports or APIs are used by the plugin
+  - Plugin uses standard NetBox plugin API that remains stable across versions
+
+### Changed
+- **Python Version Requirements**: Updated minimum Python version to 3.12
+  - NetBox 4.5.x requires Python 3.12, 3.13, or 3.14
+  - Dropped support for Python 3.8, 3.9, 3.10, and 3.11
+  - Updated Black formatter target version to Python 3.12
+- **Version Compatibility Range**: Extended NetBox compatibility to 4.4.0 - 4.5.99
+  - Plugin now officially supports both NetBox 4.4.x and 4.5.x
+  - Backward compatibility maintained for NetBox 4.4.x users
+- **Documentation**: Updated compatibility table and installation instructions
+  - Added Python requirements note for different NetBox versions
+  - Clarified version support and testing status
+
+### Technical Details
+- **Files Modified**:
+  - `pyproject.toml` - Updated version to 1.2.3, Python requirements to >=3.12, and classifiers
+  - `netbox_maintenance_device/__init__.py` - Updated version and max_version to 4.5.99
+  - `README.md` - Updated compatibility table and installation instructions
+  - `CHANGELOG.md` - Added version 1.2.3 release notes
+
+### Verification
+- No breaking changes from NetBox 4.5.x affect this plugin:
+  - Plugin does not use deprecated `core.models.contenttypes` module
+  - Plugin does not use deprecated `utilities.utils` imports
+  - Plugin does not use deprecated `load_yaml()` or `load_json()` methods
+  - Plugin does not use deprecated `/api/extras/object-types/` endpoint
+  - Plugin does not reference deprecated `is_staff` field
+  - Plugin does not create webhooks with `model` key in payload
+  - Plugin uses standard permissions.BasePermission (not deprecated classes)
+
 ## [1.2.2] - 2025-10-02
 
 ### Fixed
