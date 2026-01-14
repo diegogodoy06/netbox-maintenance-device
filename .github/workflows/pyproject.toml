@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox-maintenance-device"
+version = "1.2.3"  # Atualize para uma versão nova
+description = "NetBox maintenance device plugin"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Seu Nome", email = "seu@email.com"}
+]
+keywords = ["netbox", "maintenance", "device"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    # Adicione suas dependências aqui
+]
+
+[project.urls]
+Homepage = "https://github.com/diegogodoy06/netbox-maintenance-device"
+Repository = "https://github.com/diegogodoy06/netbox-maintenance-device"
+Issues = "https://github.com/diegogodoy06/netbox-maintenance-device/issues"
+
+[tool.setuptools]
+packages = ["netbox_maintenance_device"]
+
+[tool.setuptools.package-data]
+netbox_maintenance_device = ["**/*.html", "**/*.js", "**/*.css", "**/*.mo", "**/*.po"]
