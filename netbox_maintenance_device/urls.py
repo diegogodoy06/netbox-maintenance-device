@@ -25,6 +25,9 @@ urlpatterns = [
     
     # Device Tab
     path('device/<int:pk>/maintenance/', views.device_maintenance_tab, name='device_maintenance_tab'),
+
+    # Virtual Machine Tab
+    path('virtual-machine/<int:pk>/maintenance/', views.virtualmachine_maintenance_tab, name='virtualmachine_maintenance_tab'),
     
     # Quick Actions
     path('quick-complete/', views.quick_complete_maintenance, name='quick_complete'),

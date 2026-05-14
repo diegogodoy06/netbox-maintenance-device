@@ -18,7 +18,7 @@
 {% endif %}
 
 {% if perms.netbox_maintenance_device.add_maintenanceexecution %}
-<a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_add' %}?device={{ object.pk }}" class="btn btn-sm btn-primary">
+<a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_add' %}?{{ target_kwarg|default:'device' }}={{ object.pk }}" class="btn btn-sm btn-primary">
     <i class="mdi mdi-wrench" aria-hidden="true"></i> {% trans "Add Execution" %}
 </a>
 {% endif %}

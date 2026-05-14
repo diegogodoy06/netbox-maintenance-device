@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-05-14
+
+### Added
+
+- **Virtual Machine support (#14)**: Maintenance plans can now target either a `dcim.Device` **or** a `virtualization.VirtualMachine`. A new "Maintenance" section appears on VM detail pages with the same UX as devices (active plans, recent activity, schedule / complete actions), plus a dedicated VM maintenance tab at `/plugins/maintenance-device/virtual-machine/<pk>/maintenance/`.
+- **Calendar-based scheduling (#15)**: Plans now have a `frequency_unit` (`days` / `weeks` / `months` / `quarters` / `years`) and an optional `anchor_date`. When `anchor_date` is set, the next maintenance is computed as `anchor_date + n * step` strictly after the last execution, eliminating the date drift that affected the legacy day-only schedules. Example: a quarterly plan anchored on Jan 1 stays on Jan 1 / Apr 1 / Jul 1 / Oct 1 indefinitely.
+- New `MaintenancePlan.target`, `target_type`, `target_name` helpers; `get_frequency_display()` for human-readable rendering in tables and templates.
+- API: `MaintenancePlanSerializer` exposes `virtual_machine`, `frequency_unit`, `anchor_date`, and `target_type`. `MaintenanceExecutionSerializer` exposes `virtual_machine`, `virtual_machine_id`, and `target_type` (legacy `device` / `device_id` fields remain for backward compatibility, now nullable). Filter sets accept `virtual_machine` / `virtual_machine_id` and `frequency_unit`.
+
+### Changed
+
+- **Schema**: `MaintenancePlan.device` is now nullable; new `virtual_machine` FK with the same `related_name='maintenance_plans'`; uniqueness rule replaced by two conditional `UniqueConstraint`s — name unique per device, and independently unique per VM.
+- `MaintenancePlan.frequency_days` is now a generic count (`Frequency`), interpreted via `frequency_unit`. Existing rows are preserved unchanged (default `frequency_unit='days'` means previous "Frequency (days)" semantics are kept on upgrade).
+- `UpcomingMaintenanceView` queryset no longer relies on SQL-side annotations for the next-due date (multi-unit / anchored math doesn't fit a single SQL expression); next-due / days-until are computed in Python via the model and the existing table fallback. `select_related` for `device` and `virtual_machine` added.
+- Tables, list views and detail templates now show a unified "Target" column with a Device / VM badge, an "Anchor" column and a human-readable "Frequency" column.
+
+### Migration
+
+- New `0003_virtual_machine_and_calendar_schedule` migration. Forward-compatible — existing day-based plans keep their behavior; no manual data migration required.
+
+### Closes
+
+- #14 (Feature request - supporting virtual devices)
+- #15 (Feature request - Support calendar-based scheduling)
+
 ## [1.3.1] - 2026-05-14
 
 ### Fixed
