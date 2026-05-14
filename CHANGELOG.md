@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-05-14
+
+### Added
+
+- **NetBox 4.6.x Compatibility**: Full compatibility with NetBox 4.6.0 and later (extended supported version range to `4.4.0` – `4.6.99` via `max_version`).
+- Verified plugin loads and runs against NetBox 4.6.x (Django 6.0).
+- Confirmed all plugin APIs used by this plugin remain stable in 4.6: `NetBoxModel`, `NetBoxModelForm`, `NetBoxModelFilterSet`, `NetBoxTable`, `NetBoxModelSerializer`, `WritableNestedSerializer`, `NetBoxModelViewSet`, `NetBoxRouter`, `PluginConfig`, `PluginMenu`, `PluginMenuItem`, `PluginMenuButton`, `PluginTemplateExtension`, and `netbox.views.generic.*`.
+
+### Changed
+
+- **Version**: Bumped plugin version to `1.3.0`.
+- **Documentation**: Updated compatibility table, badges and installation examples to reference NetBox 4.6.x and plugin version `1.3.0`.
+
+### Fixed
+
+- **Plugin failing to load on NetBox 4.6.x**: Root cause was the strict `max_version = '4.5.99'` declaration in `PluginConfig`, which made NetBox 4.6 refuse to load the plugin even though the underlying APIs are compatible.
+- **Removed deprecated import**: `OptionalLimitOffsetPagination` was imported (but unused) in `api/views.py`. It has been renamed to `NetBoxPagination` in NetBox 4.6 and will be removed in 4.7. The unused import was removed to eliminate the `DeprecationWarning` at startup.
+
+### Technical Details
+
+Files Modified:
+
+- `netbox_maintenance_device/__init__.py` – Bumped `version` to `1.3.0` and `max_version` to `4.6.99`.
+- `netbox_maintenance_device/api/views.py` – Removed unused, deprecated `from netbox.api.pagination import OptionalLimitOffsetPagination`.
+- `pyproject.toml` – Bumped version to `1.3.0`.
+- `README.md` – Updated badge, compatibility table and install instructions.
+- `USAGE.md` – Updated version/compatibility footer.
+- `CHANGELOG.md` – Added 1.3.0 release notes.
+
+### Verification
+
+No breaking changes from NetBox 4.6.x affect this plugin:
+
+- Plugin does not use the deprecated `OptionalLimitOffsetPagination` (unused import was removed).
+- Plugin does not use the deprecated `querystring` template tag.
+- Plugin does not use the deprecated `ExpandableIPAddressField` or `expand_ipaddress_pattern()`.
+- Plugin does not rely on `LOGIN_REQUIRED`, `DEFAULT_ACTION_PERMISSIONS` or the deprecated `models` key in the application registry.
+- Plugin remains compatible with Django 6.0 (used by NetBox 4.6.x).
+
 ## [1.2.3] - 2026-01-14
 
 ### Added
