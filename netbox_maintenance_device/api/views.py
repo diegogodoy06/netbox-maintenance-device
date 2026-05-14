@@ -24,11 +24,11 @@ from .permissions import (
 
 class MaintenancePlanFilter(filters.FilterSet):
     """Advanced filtering for MaintenancePlan API"""
-    
+
     # Device filters
     device_id = filters.ModelMultipleChoiceFilter(
         field_name='device',
-        queryset=lambda request: models.Device.objects.all(),
+        queryset=lambda request: __import__('dcim.models', fromlist=['Device']).Device.objects.all(),
         label='Device (ID)',
     )
     device = filters.CharFilter(
@@ -36,11 +36,29 @@ class MaintenancePlanFilter(filters.FilterSet):
         lookup_expr='icontains',
         label='Device (name)',
     )
-    
+
+    # Virtual machine filters
+    virtual_machine_id = filters.ModelMultipleChoiceFilter(
+        field_name='virtual_machine',
+        queryset=lambda request: __import__(
+            'virtualization.models', fromlist=['VirtualMachine']
+        ).VirtualMachine.objects.all(),
+        label='Virtual Machine (ID)',
+    )
+    virtual_machine = filters.CharFilter(
+        field_name='virtual_machine__name',
+        lookup_expr='icontains',
+        label='Virtual Machine (name)',
+    )
+
     # Maintenance type filters
     maintenance_type = filters.MultipleChoiceFilter(
         choices=models.MaintenancePlan.MAINTENANCE_TYPE_CHOICES,
         label='Maintenance Type',
+    )
+    frequency_unit = filters.MultipleChoiceFilter(
+        choices=models.MaintenancePlan.FREQUENCY_UNIT_CHOICES,
+        label='Frequency Unit',
     )
     
     # Frequency filters
@@ -91,14 +109,15 @@ class MaintenancePlanFilter(filters.FilterSet):
         """Full-text search across multiple fields"""
         if not value.strip():
             return queryset
-        
+
         return queryset.filter(
             Q(name__icontains=value) |
             Q(description__icontains=value) |
             Q(device__name__icontains=value) |
-            Q(device__serial__icontains=value)
+            Q(device__serial__icontains=value) |
+            Q(virtual_machine__name__icontains=value)
         ).distinct()
-    
+
     class Meta:
         model = models.MaintenancePlan
         fields = []
@@ -122,13 +141,27 @@ class MaintenanceExecutionFilter(filters.FilterSet):
     # Device filters (through plan)
     device_id = filters.ModelMultipleChoiceFilter(
         field_name='maintenance_plan__device',
-        queryset=lambda request: models.Device.objects.all(),
+        queryset=lambda request: __import__('dcim.models', fromlist=['Device']).Device.objects.all(),
         label='Device (ID)',
     )
     device = filters.CharFilter(
         field_name='maintenance_plan__device__name',
         lookup_expr='icontains',
         label='Device (name)',
+    )
+
+    # Virtual machine filters (through plan)
+    virtual_machine_id = filters.ModelMultipleChoiceFilter(
+        field_name='maintenance_plan__virtual_machine',
+        queryset=lambda request: __import__(
+            'virtualization.models', fromlist=['VirtualMachine']
+        ).VirtualMachine.objects.all(),
+        label='Virtual Machine (ID)',
+    )
+    virtual_machine = filters.CharFilter(
+        field_name='maintenance_plan__virtual_machine__name',
+        lookup_expr='icontains',
+        label='Virtual Machine (name)',
     )
     
     # Status filters
@@ -189,10 +222,11 @@ class MaintenanceExecutionFilter(filters.FilterSet):
         """Full-text search across multiple fields"""
         if not value.strip():
             return queryset
-        
+
         return queryset.filter(
             Q(maintenance_plan__name__icontains=value) |
             Q(maintenance_plan__device__name__icontains=value) |
+            Q(maintenance_plan__virtual_machine__name__icontains=value) |
             Q(notes__icontains=value) |
             Q(technician__icontains=value)
         ).distinct()
@@ -205,7 +239,9 @@ class MaintenanceExecutionFilter(filters.FilterSet):
 class MaintenancePlanViewSet(NetBoxModelViewSet):
     """Complete API ViewSet for MaintenancePlan with advanced features"""
     
-    queryset = models.MaintenancePlan.objects.select_related('device').prefetch_related(
+    queryset = models.MaintenancePlan.objects.select_related(
+        'device', 'virtual_machine'
+    ).prefetch_related(
         'tags',
         Prefetch('executions', queryset=models.MaintenanceExecution.objects.order_by('-scheduled_date'))
     )
@@ -215,13 +251,16 @@ class MaintenancePlanViewSet(NetBoxModelViewSet):
     
     # Ordering options
     ordering_fields = [
-        'id', 'name', 'device__name', 'maintenance_type', 
-        'frequency_days', 'is_active', 'created', 'last_updated'
+        'id', 'name', 'device__name', 'virtual_machine__name', 'maintenance_type',
+        'frequency_days', 'frequency_unit', 'is_active', 'created', 'last_updated',
     ]
-    ordering = ['device__name', 'name']
+    ordering = ['device__name', 'virtual_machine__name', 'name']
     
     # Search fields for basic search
-    search_fields = ['name', 'description', 'device__name', 'device__serial']
+    search_fields = [
+        'name', 'description', 'device__name', 'device__serial',
+        'virtual_machine__name',
+    ]
     
     def get_queryset(self):
         """Optimize queryset with annotations for computed fields"""
@@ -329,7 +368,8 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
     
     queryset = models.MaintenanceExecution.objects.select_related(
         'maintenance_plan',
-        'maintenance_plan__device'
+        'maintenance_plan__device',
+        'maintenance_plan__virtual_machine',
     ).prefetch_related('tags')
     serializer_class = MaintenanceExecutionSerializer
     filterset_class = MaintenanceExecutionFilter
@@ -337,16 +377,19 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
     
     # Ordering options
     ordering_fields = [
-        'id', 'scheduled_date', 'completed_date', 'status', 
+        'id', 'scheduled_date', 'completed_date', 'status',
         'maintenance_plan__name', 'maintenance_plan__device__name',
-        'technician', 'created', 'last_updated'
+        'maintenance_plan__virtual_machine__name',
+        'technician', 'created', 'last_updated',
     ]
     ordering = ['-scheduled_date']
     
     # Search fields for basic search
     search_fields = [
-        'maintenance_plan__name', 'maintenance_plan__device__name',
-        'notes', 'technician'
+        'maintenance_plan__name',
+        'maintenance_plan__device__name',
+        'maintenance_plan__virtual_machine__name',
+        'notes', 'technician',
     ]
     
     @action(detail=True, methods=['post'], permission_classes=[CanCompleteMaintenance])

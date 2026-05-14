@@ -10,6 +10,7 @@ from django.views.decorators.http import require_http_methods
 import json
 from netbox.views import generic
 from dcim.models import Device
+from virtualization.models import VirtualMachine
 from . import forms, models, tables
 
 
@@ -66,77 +67,16 @@ class UpcomingMaintenanceView(generic.ObjectListView):
     template_name = 'netbox_maintenance_device/upcoming_maintenance.html'
     
     def get_queryset(self, request):
-        from django.db.models import (
-            Case, When, Value, IntegerField, Subquery, OuterRef, F, 
-            ExpressionWrapper, DateTimeField, DurationField
+        # Active plans only. Next-due dates are computed in Python because the
+        # schedule logic now spans multiple units (days/weeks/months/quarters/years)
+        # and an optional anchor date, which can't be expressed cleanly as a single
+        # SQL expression. Tables fall back to model methods when the annotation
+        # fields are missing.
+        return (
+            super().get_queryset(request)
+            .select_related('device', 'virtual_machine')
+            .prefetch_related('executions')
         )
-        from django.db.models.functions import Cast, Coalesce, Extract
-        from datetime import timedelta
-        
-        # Get all active maintenance plans
-        queryset = super().get_queryset(request)
-        
-        # Subquery to get the last completed execution date for each plan
-        last_execution = models.MaintenanceExecution.objects.filter(
-            maintenance_plan=OuterRef('pk'),
-            completed=True
-        ).order_by('-completed_date')
-        
-        # Current time for calculations
-        now = timezone.now()
-        
-        # Annotate the queryset with calculated fields
-        queryset = queryset.annotate(
-            # Get last completed date
-            last_completed_date=Subquery(last_execution.values('completed_date')[:1]),
-            
-            # Calculate next maintenance date
-            # If there's a last execution, add frequency_days to it, otherwise add to created date
-            _next_due_date=Case(
-                When(
-                    last_completed_date__isnull=False,
-                    then=ExpressionWrapper(
-                        F('last_completed_date') + F('frequency_days') * timedelta(days=1),
-                        output_field=DateTimeField()
-                    )
-                ),
-                default=ExpressionWrapper(
-                    F('created') + F('frequency_days') * timedelta(days=1),
-                    output_field=DateTimeField()
-                ),
-                output_field=DateTimeField()
-            )
-        )
-        
-        # Second annotation for days_until calculation (depends on _next_due_date)
-        queryset = queryset.annotate(
-            # Calculate days until due (will be negative for overdue)
-            # Extract days from the duration
-            _days_until=Cast(
-                Extract(
-                    ExpressionWrapper(
-                        F('_next_due_date') - now,
-                        output_field=DurationField()
-                    ),
-                    'epoch'
-                ) / 86400,  # Convert seconds to days
-                output_field=IntegerField()
-            )
-        )
-        
-        # Third annotation for status priority (depends on _days_until)
-        queryset = queryset.annotate(
-            # Calculate status priority for sorting
-            # Overdue = 0, Due Soon (<=7 days) = 1, Upcoming = 2
-            _status_priority=Case(
-                When(_days_until__lt=0, then=Value(0)),  # Overdue (highest priority)
-                When(_days_until__lte=7, then=Value(1)), # Due Soon
-                default=Value(2),                         # Upcoming
-                output_field=IntegerField()
-            )
-        )
-        
-        return queryset
     
     def get_extra_context(self, request):
         context = super().get_extra_context(request)
@@ -182,18 +122,45 @@ def device_maintenance_tab(request, pk):
     recent_executions = models.MaintenanceExecution.objects.filter(
         maintenance_plan__device=device
     ).order_by('-scheduled_date')[:10]
-    
+
     # Count overdue maintenance
     overdue_count = sum(1 for plan in maintenance_plans if plan.is_overdue())
-    
+
     context = {
+        'target': device,
+        'target_kind': 'device',
+        'target_kwarg': 'device',
         'device': device,
         'object': device,  # For consistency with NetBox templates
         'maintenance_plans': maintenance_plans,
         'recent_executions': recent_executions,
         'overdue_count': overdue_count,
     }
-    
+
+    return render(request, 'netbox_maintenance_device/device_maintenance_tab.html', context)
+
+
+def virtualmachine_maintenance_tab(request, pk):
+    """Tab view for virtual machine maintenance history."""
+    vm = get_object_or_404(VirtualMachine, pk=pk)
+    maintenance_plans = models.MaintenancePlan.objects.filter(virtual_machine=vm).order_by('name')
+    recent_executions = models.MaintenanceExecution.objects.filter(
+        maintenance_plan__virtual_machine=vm
+    ).order_by('-scheduled_date')[:10]
+
+    overdue_count = sum(1 for plan in maintenance_plans if plan.is_overdue())
+
+    context = {
+        'target': vm,
+        'target_kind': 'virtualmachine',
+        'target_kwarg': 'virtual_machine',
+        'device': vm,  # Templates reuse the 'device' name for the target object.
+        'object': vm,
+        'maintenance_plans': maintenance_plans,
+        'recent_executions': recent_executions,
+        'overdue_count': overdue_count,
+    }
+
     return render(request, 'netbox_maintenance_device/device_maintenance_tab.html', context)
 
 

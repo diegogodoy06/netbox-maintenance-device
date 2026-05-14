@@ -6,11 +6,20 @@ from django.utils import timezone
 
 class DeviceNestedSerializer(WritableNestedSerializer):
     """Nested serializer for Device references - NetBox 4.4.x compatible"""
-    
+
     class Meta:
         # Import Device model at class level
         from dcim import models as dcim_models
         model = dcim_models.Device
+        fields = ['id', 'url', 'display', 'name']
+
+
+class VirtualMachineNestedSerializer(WritableNestedSerializer):
+    """Nested serializer for VirtualMachine references."""
+
+    class Meta:
+        from virtualization import models as virt_models
+        model = virt_models.VirtualMachine
         fields = ['id', 'url', 'display', 'name']
 
 
@@ -44,71 +53,86 @@ class MaintenancePlanSerializer(NetBoxModelSerializer):
     )
     
     # Nested relationships
-    device = DeviceNestedSerializer()
+    device = DeviceNestedSerializer(required=False, allow_null=True)
+    virtual_machine = VirtualMachineNestedSerializer(required=False, allow_null=True)
     executions = NestedMaintenanceExecutionSerializer(many=True, read_only=True)
-    
+
     # Computed fields
     execution_count = serializers.IntegerField(read_only=True)
     next_maintenance_date = serializers.DateTimeField(read_only=True)
     is_overdue = serializers.BooleanField(read_only=True)
     days_until_due = serializers.IntegerField(read_only=True)
     last_execution_date = serializers.DateTimeField(read_only=True)
-    
+    target_type = serializers.CharField(read_only=True)
+
     class Meta:
         model = models.MaintenancePlan
         fields = [
-            'id', 'url', 'display', 'device', 'name', 'description', 
-            'maintenance_type', 'frequency_days', 'is_active',
+            'id', 'url', 'display', 'device', 'virtual_machine', 'name', 'description',
+            'maintenance_type', 'frequency_days', 'frequency_unit', 'anchor_date',
+            'is_active',
             'created', 'last_updated', 'custom_field_data', 'tags',
             # Relationships
             'executions', 'execution_count',
             # Computed fields
             'next_maintenance_date', 'is_overdue', 'days_until_due',
-            'last_execution_date'
+            'last_execution_date', 'target_type',
         ]
-        
+
     def validate_frequency_days(self, value):
-        """Validate frequency days is positive and reasonable"""
-        if value <= 0:
-            raise serializers.ValidationError("Frequency must be greater than 0 days")
-        if value > 3650:  # 10 years
-            raise serializers.ValidationError("Frequency cannot exceed 3650 days (10 years)")
+        """Validate frequency count is positive."""
+        if value is None or value <= 0:
+            raise serializers.ValidationError("Frequency must be greater than 0")
         return value
-    
+
     def validate(self, data):
-        """Additional model-level validations"""
-        device = data.get('device')
-        name = data.get('name')
-        
-        # Check for duplicate plan names per device (excluding current instance)
-        if device and name:
-            existing_plans = models.MaintenancePlan.objects.filter(
-                device=device, name=name
+        """Cross-field validation: exactly one target, unique name per target."""
+        # `data` carries only the fields submitted; merge with instance for partial updates.
+        device = data.get('device', getattr(self.instance, 'device', None))
+        vm = data.get('virtual_machine', getattr(self.instance, 'virtual_machine', None))
+        name = data.get('name', getattr(self.instance, 'name', None))
+
+        if device and vm:
+            raise serializers.ValidationError(
+                "Pick either a device or a virtual machine, not both."
             )
+        if not device and not vm:
+            raise serializers.ValidationError(
+                "A maintenance plan must reference either a device or a virtual machine."
+            )
+
+        if name:
+            target_filter = {'device': device} if device else {'virtual_machine': vm}
+            existing_plans = models.MaintenancePlan.objects.filter(name=name, **target_filter)
             if self.instance:
                 existing_plans = existing_plans.exclude(pk=self.instance.pk)
-            
+
             if existing_plans.exists():
+                target_label = 'device' if device else 'virtual machine'
                 raise serializers.ValidationError({
-                    'name': f"A maintenance plan with name '{name}' already exists for this device."
+                    'name': (
+                        f"A maintenance plan with name '{name}' already exists "
+                        f"for this {target_label}."
+                    )
                 })
-        
+
         return data
     
     def to_representation(self, instance):
         """Add computed fields to the representation"""
         data = super().to_representation(instance)
-        
+
         # Add computed fields
         data['execution_count'] = instance.executions.count()
         data['next_maintenance_date'] = instance.get_next_maintenance_date()
         data['is_overdue'] = instance.is_overdue()
         data['days_until_due'] = instance.days_until_due()
-        
+        data['target_type'] = instance.target_type
+
         # Add last execution date
         last_execution = instance.executions.filter(completed=True).order_by('-completed_date').first()
         data['last_execution_date'] = last_execution.completed_date if last_execution else None
-        
+
         return data
 
 
@@ -122,20 +146,28 @@ class MaintenanceExecutionSerializer(NetBoxModelSerializer):
     # Nested relationships
     maintenance_plan = NestedMaintenancePlanSerializer()
     
-    # Computed fields
-    device = serializers.CharField(source='maintenance_plan.device.name', read_only=True)
-    device_id = serializers.IntegerField(source='maintenance_plan.device.id', read_only=True)
+    # Computed fields — kept for backward compatibility with existing API consumers.
+    device = serializers.CharField(source='maintenance_plan.device.name', read_only=True, default=None)
+    device_id = serializers.IntegerField(source='maintenance_plan.device.id', read_only=True, default=None)
+    virtual_machine = serializers.CharField(
+        source='maintenance_plan.virtual_machine.name', read_only=True, default=None,
+    )
+    virtual_machine_id = serializers.IntegerField(
+        source='maintenance_plan.virtual_machine.id', read_only=True, default=None,
+    )
+    target_type = serializers.CharField(source='maintenance_plan.target_type', read_only=True)
     plan_name = serializers.CharField(source='maintenance_plan.name', read_only=True)
     duration_days = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = models.MaintenanceExecution
         fields = [
-            'id', 'url', 'display', 'maintenance_plan', 'scheduled_date', 
+            'id', 'url', 'display', 'maintenance_plan', 'scheduled_date',
             'completed_date', 'status', 'notes', 'technician', 'completed',
             'created', 'last_updated', 'custom_field_data', 'tags',
             # Computed fields
-            'device', 'device_id', 'plan_name', 'duration_days'
+            'device', 'device_id', 'virtual_machine', 'virtual_machine_id',
+            'target_type', 'plan_name', 'duration_days',
         ]
     
     def get_duration_days(self, obj):
