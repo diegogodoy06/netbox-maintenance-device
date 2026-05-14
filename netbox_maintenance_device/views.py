@@ -60,58 +60,95 @@ class MaintenanceExecutionChangeLogView(generic.ObjectChangeLogView):
     queryset = models.MaintenanceExecution.objects.all()
 
 
+UPCOMING_STATUS_CHOICES = [
+    ('overdue', _('Overdue')),
+    ('due_soon', _('Due Soon (≤ 7 days)')),
+    ('upcoming', _('Upcoming (8–30 days)')),
+    ('on_track', _('On Track (> 30 days)')),
+]
+
+
+def _classify_plan(days):
+    """Map days-until-due to a status bucket used by the upcoming view filter."""
+    if days is None:
+        return None
+    if days < 0:
+        return 'overdue'
+    if days <= 7:
+        return 'due_soon'
+    if days <= 30:
+        return 'upcoming'
+    return 'on_track'
+
+
 class UpcomingMaintenanceView(generic.ObjectListView):
-    """View for upcoming and overdue maintenance"""
+    """View for upcoming and overdue maintenance."""
     queryset = models.MaintenancePlan.objects.filter(is_active=True)
     table = tables.UpcomingMaintenanceTable
     template_name = 'netbox_maintenance_device/upcoming_maintenance.html'
-    
-    def get_queryset(self, request):
-        # Active plans only. Next-due dates are computed in Python because the
-        # schedule logic now spans multiple units (days/weeks/months/quarters/years)
-        # and an optional anchor date, which can't be expressed cleanly as a single
-        # SQL expression. Tables fall back to model methods when the annotation
-        # fields are missing.
+
+    def _base_queryset(self, request):
         return (
-            super().get_queryset(request)
+            models.MaintenancePlan.objects.filter(is_active=True)
             .select_related('device', 'virtual_machine')
             .prefetch_related('executions')
         )
-    
+
+    def get_queryset(self, request):
+        # Status, maintenance_type and target_type filters are applied here because
+        # the status comes from a Python computation (next-due across units and
+        # optional anchors) that can't be expressed as a single SQL predicate.
+        qs = self._base_queryset(request)
+
+        maintenance_type = request.GET.get('maintenance_type')
+        if maintenance_type in {choice for choice, _label in models.MaintenancePlan.MAINTENANCE_TYPE_CHOICES}:
+            qs = qs.filter(maintenance_type=maintenance_type)
+
+        target_type = request.GET.get('target_type')
+        if target_type == 'device':
+            qs = qs.filter(device__isnull=False)
+        elif target_type == 'virtualmachine':
+            qs = qs.filter(virtual_machine__isnull=False)
+
+        status_filter = request.GET.get('status')
+        if status_filter in {key for key, _label in UPCOMING_STATUS_CHOICES}:
+            matching_pks = [
+                plan.pk for plan in qs
+                if _classify_plan(plan.days_until_due()) == status_filter
+            ]
+            qs = qs.filter(pk__in=matching_pks)
+
+        return qs
+
     def get_extra_context(self, request):
         context = super().get_extra_context(request)
-        
-        # Calculate statistics for all plans
-        queryset = self.get_queryset(request)
-        
-        overdue_count = 0
-        due_soon_count = 0
-        upcoming_count = 0
-        on_track_count = 0
-        
-        for plan in queryset:
-            # Use annotated field if available
-            if hasattr(plan, '_days_until'):
-                days = plan._days_until
-            else:
-                days = plan.days_until_due()
-            
-            if days is not None:
-                if days < 0:
-                    overdue_count += 1
-                elif days <= 7:
-                    due_soon_count += 1
-                elif days <= 30:
-                    upcoming_count += 1
-                else:
-                    on_track_count += 1
-        
-        context['overdue_count'] = overdue_count
-        context['due_soon_count'] = due_soon_count
-        context['upcoming_count'] = upcoming_count
-        context['on_track_count'] = on_track_count
-        context['total_plans'] = queryset.count()
-        
+
+        # Stats use the unfiltered base set so badges always reflect the whole picture,
+        # not the slice the user is currently viewing.
+        overdue_count = due_soon_count = upcoming_count = on_track_count = 0
+        for plan in self._base_queryset(request):
+            bucket = _classify_plan(plan.days_until_due())
+            if bucket == 'overdue':
+                overdue_count += 1
+            elif bucket == 'due_soon':
+                due_soon_count += 1
+            elif bucket == 'upcoming':
+                upcoming_count += 1
+            elif bucket == 'on_track':
+                on_track_count += 1
+
+        context.update({
+            'overdue_count': overdue_count,
+            'due_soon_count': due_soon_count,
+            'upcoming_count': upcoming_count,
+            'on_track_count': on_track_count,
+            'total_plans': overdue_count + due_soon_count + upcoming_count + on_track_count,
+            'status_choices': UPCOMING_STATUS_CHOICES,
+            'maintenance_type_choices': models.MaintenancePlan.MAINTENANCE_TYPE_CHOICES,
+            'selected_status': request.GET.get('status', ''),
+            'selected_maintenance_type': request.GET.get('maintenance_type', ''),
+            'selected_target_type': request.GET.get('target_type', ''),
+        })
         return context
 
 
