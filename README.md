@@ -11,10 +11,13 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 
 ## Features
 
-- **Maintenance Plans**: Create and manage maintenance plans for devices with configurable frequency
+- **Maintenance Plans**: Create and manage maintenance plans for devices **and virtual machines** with configurable frequency
+- **Virtual Machine Support**: Plans can target either a `dcim.Device` or a `virtualization.VirtualMachine`, with the same UX on both detail pages (#14)
+- **Calendar-based Scheduling**: Schedule every N days / weeks / months / quarters / years, with an optional **calendar anchor** to avoid drift — e.g. "1st day of every month" or "start of each quarter" stays aligned with the calendar regardless of when previous executions happened (#15)
 - **Maintenance Executions**: Record and track maintenance executions with status monitoring
-- **Device Integration**: View maintenance history directly on device pages with dedicated tabs
+- **Device & VM Integration**: View maintenance history directly on device and VM pages with dedicated tabs
 - **Quick Actions**: Schedule and complete maintenance directly from the interface
+- **Upcoming & Overdue Dashboard**: Filter by status (Overdue / Due Soon / Upcoming / On Track), maintenance type, and target type (Device / VM)
 - **REST API**: Complete REST API for external integrations and automation
 - **Advanced Filtering**: Powerful filtering and search capabilities
 - **Custom Actions**: Schedule, complete, and cancel maintenance via API
@@ -34,7 +37,7 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 | 4.0.x | **Likely Compatible** | Not officially tested |
 | 3.x | **Not Supported** | Breaking changes |
 
-> **Note**: This version (v1.3.1) is specifically tested and certified for NetBox 4.4.x, 4.5.x, and 4.6.x. While it may work with other 4.x versions, we recommend testing in a development environment first.
+> **Note**: This version (v1.4.1) is specifically tested and certified for NetBox 4.4.x, 4.5.x, and 4.6.x. While it may work with other 4.x versions, we recommend testing in a development environment first.
 
 > **Python Requirements**: NetBox 4.5.x and 4.6.x require Python 3.12, 3.13, or 3.14. NetBox 4.6.x also runs on Django 6.0. If you're using NetBox 4.4.x or earlier, you can use Python 3.8+.
 
@@ -51,12 +54,12 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 pip install netbox-maintenance-device
 
 # Or install a specific version
-pip install netbox-maintenance-device==1.3.1
+pip install netbox-maintenance-device==1.4.1
 ```
 
 **For Docker deployments**, add to your `plugin_requirements.txt`:
 ```bash
-echo "netbox-maintenance-device>=1.3.1" >> plugin_requirements.txt
+echo "netbox-maintenance-device>=1.4.1" >> plugin_requirements.txt
 ```
 
 ### Method 2: GitHub Installation
