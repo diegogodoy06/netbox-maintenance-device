@@ -25,11 +25,11 @@ def _render_target_type(record):
     target_type = record.target_type
     if target_type == 'device':
         return mark_safe(
-            '<span class="badge bg-secondary"><i class="mdi mdi-server"></i> Device</span>'
+            '<span class="badge text-bg-primary"><i class="mdi mdi-server"></i> Device</span>'
         )
     if target_type == 'virtualmachine':
         return mark_safe(
-            '<span class="badge bg-info"><i class="mdi mdi-monitor"></i> VM</span>'
+            '<span class="badge text-bg-info"><i class="mdi mdi-monitor"></i> VM</span>'
         )
     return '-'
 

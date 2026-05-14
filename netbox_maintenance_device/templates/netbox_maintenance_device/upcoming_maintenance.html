@@ -12,51 +12,59 @@
 {% block content %}
 <div class="row">
     <div class="col col-md-12">
-        <!-- Statistics Cards -->
+        <!-- Statistics Cards — click to filter -->
         <div class="row mb-3">
             <div class="col-sm-6 col-lg-3 mb-2">
-                <div class="card border-danger">
-                    <div class="card-body text-center p-3">
-                        <div class="text-danger mb-1">
-                            <i class="mdi mdi-alert-circle mdi-24px"></i>
+                <a href="?status=overdue" class="text-decoration-none">
+                    <div class="card border-danger {% if selected_status == 'overdue' %}bg-danger bg-opacity-10{% endif %}">
+                        <div class="card-body text-center p-3">
+                            <div class="text-danger mb-1">
+                                <i class="mdi mdi-alert-circle mdi-24px"></i>
+                            </div>
+                            <h3 class="mb-1 text-danger">{{ overdue_count }}</h3>
+                            <small class="text-muted">{% trans "Overdue" %}</small>
                         </div>
-                        <h3 class="mb-1 text-danger">{{ overdue_count }}</h3>
-                        <small class="text-muted">{% trans "Overdue" %}</small>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-sm-6 col-lg-3 mb-2">
-                <div class="card border-warning">
-                    <div class="card-body text-center p-3">
-                        <div class="text-warning mb-1">
-                            <i class="mdi mdi-clock-alert mdi-24px"></i>
+                <a href="?status=due_soon" class="text-decoration-none">
+                    <div class="card border-warning {% if selected_status == 'due_soon' %}bg-warning bg-opacity-10{% endif %}">
+                        <div class="card-body text-center p-3">
+                            <div class="text-warning mb-1">
+                                <i class="mdi mdi-clock-alert mdi-24px"></i>
+                            </div>
+                            <h3 class="mb-1 text-warning">{{ due_soon_count }}</h3>
+                            <small class="text-muted">{% trans "Due Soon (≤7 days)" %}</small>
                         </div>
-                        <h3 class="mb-1 text-warning">{{ due_soon_count }}</h3>
-                        <small class="text-muted">{% trans "Due Soon (≤7 days)" %}</small>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-sm-6 col-lg-3 mb-2">
-                <div class="card border-info">
-                    <div class="card-body text-center p-3">
-                        <div class="text-info mb-1">
-                            <i class="mdi mdi-calendar-clock mdi-24px"></i>
+                <a href="?status=upcoming" class="text-decoration-none">
+                    <div class="card border-info {% if selected_status == 'upcoming' %}bg-info bg-opacity-10{% endif %}">
+                        <div class="card-body text-center p-3">
+                            <div class="text-info mb-1">
+                                <i class="mdi mdi-calendar-clock mdi-24px"></i>
+                            </div>
+                            <h3 class="mb-1 text-info">{{ upcoming_count }}</h3>
+                            <small class="text-muted">{% trans "Upcoming (8-30 days)" %}</small>
                         </div>
-                        <h3 class="mb-1 text-info">{{ upcoming_count }}</h3>
-                        <small class="text-muted">{% trans "Upcoming (8-30 days)" %}</small>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-sm-6 col-lg-3 mb-2">
-                <div class="card border-success">
-                    <div class="card-body text-center p-3">
-                        <div class="text-success mb-1">
-                            <i class="mdi mdi-check-circle mdi-24px"></i>
+                <a href="?status=on_track" class="text-decoration-none">
+                    <div class="card border-success {% if selected_status == 'on_track' %}bg-success bg-opacity-10{% endif %}">
+                        <div class="card-body text-center p-3">
+                            <div class="text-success mb-1">
+                                <i class="mdi mdi-check-circle mdi-24px"></i>
+                            </div>
+                            <h3 class="mb-1 text-success">{{ on_track_count }}</h3>
+                            <small class="text-muted">{% trans "On Track (>30 days)" %}</small>
                         </div>
-                        <h3 class="mb-1 text-success">{{ on_track_count }}</h3>
-                        <small class="text-muted">{% trans "On Track (>30 days)" %}</small>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
         
@@ -73,10 +81,51 @@
         </div>
         {% endif %}
         
+        <div class="card mb-3">
+            <div class="card-body">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label for="filter-status" class="form-label small mb-1">{% trans "Status" %}</label>
+                        <select id="filter-status" name="status" class="form-select form-select-sm">
+                            <option value="">{% trans "All statuses" %}</option>
+                            {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filter-type" class="form-label small mb-1">{% trans "Maintenance Type" %}</label>
+                        <select id="filter-type" name="maintenance_type" class="form-select form-select-sm">
+                            <option value="">{% trans "All types" %}</option>
+                            {% for value, label in maintenance_type_choices %}
+                                <option value="{{ value }}" {% if selected_maintenance_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filter-target" class="form-label small mb-1">{% trans "Target" %}</label>
+                        <select id="filter-target" name="target_type" class="form-select form-select-sm">
+                            <option value="">{% trans "Devices and VMs" %}</option>
+                            <option value="device" {% if selected_target_type == 'device' %}selected{% endif %}>{% trans "Devices only" %}</option>
+                            <option value="virtualmachine" {% if selected_target_type == 'virtualmachine' %}selected{% endif %}>{% trans "Virtual machines only" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="mdi mdi-filter"></i> {% trans "Apply" %}
+                        </button>
+                        <a href="{% url 'plugins:netbox_maintenance_device:upcoming_maintenance' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="mdi mdi-close"></i> {% trans "Clear" %}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <div class="card">
             <h5 class="card-header">
                 <i class="mdi mdi-calendar-alert"></i> {% trans "Upcoming & Overdue Maintenance" %}
-                <span class="badge badge-secondary float-right">{{ table.data|length }}</span>
+                <span class="badge text-bg-secondary float-end">{{ table.data|length }}</span>
             </h5>
             <div class="card-body">
                 {% if table.data %}
@@ -84,7 +133,7 @@
                 {% else %}
                     <div class="alert alert-info">
                         <i class="mdi mdi-information"></i>
-                        {% trans "No upcoming or overdue maintenance found." %}
+                        {% trans "No maintenance plans match the current filter." %}
                     </div>
                 {% endif %}
             </div>

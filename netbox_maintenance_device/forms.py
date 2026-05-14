@@ -7,6 +7,7 @@ from dcim.models import Device
 from netbox.filtersets import NetBoxModelFilterSet
 from netbox.forms import NetBoxModelForm
 from utilities.forms.fields import DynamicModelChoiceField
+from utilities.forms.rendering import FieldSet
 from virtualization.models import VirtualMachine
 
 from . import models
@@ -18,14 +19,42 @@ class MaintenancePlanForm(NetBoxModelForm):
         required=False,
         selector=True,
         label=_('Device'),
-        help_text=_("Pick a device — or pick a virtual machine below, not both."),
+        help_text=_("Pick a device — leave Virtual Machine empty."),
     )
     virtual_machine = DynamicModelChoiceField(
         queryset=VirtualMachine.objects.all(),
         required=False,
         selector=True,
         label=_('Virtual Machine'),
-        help_text=_("Pick a virtual machine — or pick a device above, not both."),
+        help_text=_("Pick a virtual machine — leave Device empty."),
+    )
+    frequency_days = forms.IntegerField(
+        min_value=1,
+        label=_('Repeat every'),
+        help_text=_("How many units between maintenances (e.g. '1' + 'Months' = monthly)."),
+    )
+    frequency_unit = forms.ChoiceField(
+        choices=models.MaintenancePlan.FREQUENCY_UNIT_CHOICES,
+        label=_('Unit'),
+        help_text=_("Days / weeks / months / quarters / years."),
+    )
+    anchor_date = forms.DateField(
+        required=False,
+        label=_('Calendar anchor (optional)'),
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        help_text=_(
+            "Use this to lock the schedule to a calendar date and avoid drift. "
+            "Examples: pick any 1st-of-month to schedule on the 1st of every month; "
+            "pick 2026-01-01 with unit 'quarters' to land on Jan 1 / Apr 1 / Jul 1 / Oct 1. "
+            "Leave blank for a simple rolling interval from the last completion."
+        ),
+    )
+
+    fieldsets = (
+        FieldSet('name', 'description', 'maintenance_type', 'is_active', name=_('Plan')),
+        FieldSet('device', 'virtual_machine', name=_('Target')),
+        FieldSet('frequency_days', 'frequency_unit', 'anchor_date', name=_('Schedule')),
+        FieldSet('tags', name=_('Tags')),
     )
 
     class Meta:
@@ -34,12 +63,17 @@ class MaintenancePlanForm(NetBoxModelForm):
             'device', 'virtual_machine', 'name', 'description', 'maintenance_type',
             'frequency_days', 'frequency_unit', 'anchor_date', 'is_active', 'tags',
         ]
-        widgets = {
-            'anchor_date': forms.DateInput(attrs={'type': 'date'}),
-        }
+
+    class Media:
+        # Disables the other target field when one is selected.
+        js = ('netbox_maintenance_device/js/plan_target_toggle.js',)
 
     def clean(self):
-        cleaned_data = super().clean()
+        # NetBoxModelForm.clean() modifies self.cleaned_data in place but may not
+        # return it (Django allows either pattern), so we read from self.cleaned_data
+        # directly to avoid a NoneType crash.
+        super().clean()
+        cleaned_data = self.cleaned_data or {}
         device = cleaned_data.get('device')
         vm = cleaned_data.get('virtual_machine')
         if device and vm:
