@@ -11,8 +11,21 @@
                     <td><a href="{{ object.maintenance_plan.get_absolute_url }}">{{ object.maintenance_plan }}</a></td>
                 </tr>
                 <tr>
-                    <td>Device</td>
-                    <td><a href="{{ object.maintenance_plan.device.get_absolute_url }}">{{ object.maintenance_plan.device }}</a></td>
+                    <td>Target</td>
+                    <td>
+                        {% with target=object.maintenance_plan.target %}
+                            {% if target %}
+                                <a href="{{ target.get_absolute_url }}">{{ target }}</a>
+                                {% if object.maintenance_plan.target_type == 'device' %}
+                                    <span class="badge bg-secondary ml-1"><i class="mdi mdi-server"></i> Device</span>
+                                {% else %}
+                                    <span class="badge bg-info ml-1"><i class="mdi mdi-monitor"></i> VM</span>
+                                {% endif %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        {% endwith %}
+                    </td>
                 </tr>
                 <tr>
                     <td>Scheduled Date</td>

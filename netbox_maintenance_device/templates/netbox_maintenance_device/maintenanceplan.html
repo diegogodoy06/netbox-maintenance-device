@@ -7,8 +7,19 @@
             <h5 class="card-header">Maintenance Plan Details</h5>
             <table class="table table-hover attr-table">
                 <tr>
-                    <td>Device</td>
-                    <td><a href="{{ object.device.get_absolute_url }}">{{ object.device }}</a></td>
+                    <td>Target</td>
+                    <td>
+                        {% if object.target %}
+                            <a href="{{ object.target.get_absolute_url }}">{{ object.target }}</a>
+                            {% if object.target_type == 'device' %}
+                                <span class="badge bg-secondary ml-1"><i class="mdi mdi-server"></i> Device</span>
+                            {% else %}
+                                <span class="badge bg-info ml-1"><i class="mdi mdi-monitor"></i> VM</span>
+                            {% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td>Name</td>
@@ -24,7 +35,11 @@
                 </tr>
                 <tr>
                     <td>Frequency</td>
-                    <td>{{ object.frequency_days }} days</td>
+                    <td>{{ object.get_frequency_display }}</td>
+                </tr>
+                <tr>
+                    <td>Anchor Date</td>
+                    <td>{% if object.anchor_date %}{{ object.anchor_date|date:"Y-m-d" }}{% else %}—{% endif %}</td>
                 </tr>
                 <tr>
                     <td>Active</td>
