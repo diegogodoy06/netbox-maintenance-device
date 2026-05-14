@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-05-14
+
+### Fixed
+
+- **Crash on Maintenance Plan create/edit (`AttributeError: 'NoneType' object has no attribute 'get'`)** on NetBox 4.6 / Django 6.0. `NetBoxModelForm.clean()` modifies `self.cleaned_data` in place and does not always return it, so `super().clean()` was sometimes `None`. The plugin now reads from `self.cleaned_data` directly.
+- **Unreadable Device / VM badges** on the Maintenance Plans and Upcoming Maintenance tables. Bootstrap 5's `bg-secondary` / `bg-info` don't auto-set the foreground color in NetBox 4.6's theme, producing low-contrast text. Replaced with `text-bg-primary` (Device) and `text-bg-info` (VM), which set both background and contrasting text in one utility class.
+
+### Changed
+
+- **Plan form UX (#15 follow-up)**: relabeled the schedule fields to make calendar scheduling discoverable.
+  - `Frequency` → `Repeat every`
+  - `Frequency Unit` → `Unit`
+  - `Anchor Date` → `Calendar anchor (optional)` with a worked example in help text ("pick any 1st-of-month to schedule on the 1st of every month; pick 2026-01-01 with unit 'quarters' to land on Jan 1 / Apr 1 / Jul 1 / Oct 1").
+  - Grouped fields into `FieldSet`s (`Plan`, `Target`, `Schedule`, `Tags`) so the schedule controls read as one unit.
+- **Device / Virtual Machine field locking** on the plan form: picking one now disables the other client-side via a small static JS file (`static/netbox_maintenance_device/js/plan_target_toggle.js`, loaded via `form.Media`). The server-side XOR validation remains as a safety net.
+- **Upcoming & Overdue Maintenance**: added a filter bar above the table with **Status** (Overdue / Due Soon / Upcoming / On Track), **Maintenance Type**, and **Target** (Device / VM). Filtering happens in `UpcomingMaintenanceView.get_queryset` since the status is derived from the Python `days_until_due()` computation that can't be expressed as a single SQL predicate. Statistics cards continue to reflect the *unfiltered* totals so badges don't change with the current view slice.
+
+### Technical Details
+
+Files Modified / Added:
+
+- `netbox_maintenance_device/forms.py` — defensive `clean()`, fieldsets, relabeled schedule fields, `Media.js` reference.
+- `netbox_maintenance_device/static/netbox_maintenance_device/js/plan_target_toggle.js` — client-side toggle for Device / VM fields.
+- `netbox_maintenance_device/tables.py` — `text-bg-primary` / `text-bg-info` badges.
+- `netbox_maintenance_device/templates/netbox_maintenance_device/maintenanceplan.html` — same badge swap on the detail page.
+- `netbox_maintenance_device/templates/netbox_maintenance_device/maintenanceexecution.html` — same badge swap on the execution detail page.
+- `netbox_maintenance_device/templates/netbox_maintenance_device/upcoming_maintenance.html` — new filter form, empty-state copy updated.
+- `netbox_maintenance_device/views.py` — `_classify_plan` helper, status / type / target filtering in `UpcomingMaintenanceView.get_queryset`, stats remain based on the unfiltered base queryset.
+- `netbox_maintenance_device/__init__.py` / `pyproject.toml` — version bump to `1.4.1`.
+
 ## [1.4.0] - 2026-05-14
 
 ### Added

@@ -12,9 +12,9 @@
                         {% if object.target %}
                             <a href="{{ object.target.get_absolute_url }}">{{ object.target }}</a>
                             {% if object.target_type == 'device' %}
-                                <span class="badge bg-secondary ml-1"><i class="mdi mdi-server"></i> Device</span>
+                                <span class="badge text-bg-primary ml-1"><i class="mdi mdi-server"></i> Device</span>
                             {% else %}
-                                <span class="badge bg-info ml-1"><i class="mdi mdi-monitor"></i> VM</span>
+                                <span class="badge text-bg-info ml-1"><i class="mdi mdi-monitor"></i> VM</span>
                             {% endif %}
                         {% else %}
                             —
