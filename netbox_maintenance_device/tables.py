@@ -29,19 +29,19 @@ class MaintenancePlanTable(NetBoxTable):
     
     def render_status(self, record):
         if not record.is_active:
-            return format_html('<span class="badge badge-secondary">Inactive</span>')
-        
+            return mark_safe('<span class="badge badge-secondary">Inactive</span>')
+
         if record.is_overdue():
-            return format_html('<span class="badge badge-danger">Overdue</span>')
-        
+            return mark_safe('<span class="badge badge-danger">Overdue</span>')
+
         days_until = record.days_until_due()
         if days_until is not None:
             if days_until <= 7:
-                return format_html('<span class="badge badge-warning">Due Soon</span>')
+                return mark_safe('<span class="badge badge-warning">Due Soon</span>')
             elif days_until <= 30:
-                return format_html('<span class="badge badge-info">Upcoming</span>')
-        
-        return format_html('<span class="badge badge-success">On Track</span>')
+                return mark_safe('<span class="badge badge-info">Upcoming</span>')
+
+        return mark_safe('<span class="badge badge-success">On Track</span>')
 
 
 class MaintenanceExecutionTable(NetBoxTable):
@@ -97,27 +97,27 @@ class UpcomingMaintenanceTable(NetBoxTable):
             if days < 0:
                 return format_html('<span class="text-danger"><i class="mdi mdi-alert-circle"></i> {} days overdue</span>', abs(days))
             elif days == 0:
-                return format_html('<span class="text-warning"><i class="mdi mdi-clock-alert"></i> Due today</span>')
+                return mark_safe('<span class="text-warning"><i class="mdi mdi-clock-alert"></i> Due today</span>')
             else:
                 return f"{days} days"
         return '-'
-    
+
     def render_status(self, record):
         # Use annotated field if available, otherwise calculate
         if hasattr(record, '_days_until'):
             days = record._days_until
         else:
             days = record.days_until_due()
-        
+
         if days is not None:
             if days < 0:
-                return format_html('<span class="badge badge-danger"><i class="mdi mdi-alert-circle"></i> Overdue</span>')
+                return mark_safe('<span class="badge badge-danger"><i class="mdi mdi-alert-circle"></i> Overdue</span>')
             elif days <= 7:
-                return format_html('<span class="badge badge-warning"><i class="mdi mdi-clock-alert"></i> Due Soon</span>')
+                return mark_safe('<span class="badge badge-warning"><i class="mdi mdi-clock-alert"></i> Due Soon</span>')
             else:
-                return format_html('<span class="badge badge-info">Upcoming</span>')
-        
-        return format_html('<span class="badge badge-success">On Track</span>')
+                return mark_safe('<span class="badge badge-info">Upcoming</span>')
+
+        return mark_safe('<span class="badge badge-success">On Track</span>')
     
     def render_actions(self, record):
         from django.utils.html import escape
@@ -157,4 +157,4 @@ class UpcomingMaintenanceTable(NetBoxTable):
                 '</button>'.format(pending_execution.pk, plan_name)
             )
         
-        return format_html(' '.join(actions)) if actions else '-'
+        return mark_safe(' '.join(actions)) if actions else '-'
