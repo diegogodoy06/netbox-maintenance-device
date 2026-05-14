@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from netbox.api.viewsets import NetBoxModelViewSet
-from netbox.api.pagination import OptionalLimitOffsetPagination
 
 from netbox_maintenance_device import models
 from .serializers import (
