@@ -17,16 +17,40 @@ Complete guide for using the NetBox Maintenance Device Plugin.
 
 1. Navigate to **Plugins > Manutenção de Dispositivos > Planos de Manutenção**
 2. Click **Add** to create a new maintenance plan
-3. Select a device, provide a name, and set the frequency in days
-4. Choose between preventive or corrective maintenance type
-5. Save and activate the plan
+3. Pick **either** a Device **or** a Virtual Machine — selecting one disables the other
+4. Provide a name and (optionally) a description
+5. Choose between preventive or corrective maintenance type
+6. Configure the **Schedule**:
+   - **Repeat every** + **Unit**: e.g. `1` + `Months` for monthly maintenance, `2` + `Weeks` for bi-weekly
+   - **Calendar anchor** (optional): use to lock the schedule to a calendar date and avoid drift
+7. Save and activate the plan
+
+### Calendar Anchor — Common Patterns
+
+The anchor controls where the schedule lands on the calendar. Without it, the next due date is `last_completion + interval`, which drifts as completions happen on different days. With it, the next due date is always the next `anchor + n × interval` strictly after the last completion.
+
+| Goal | Repeat every | Unit | Calendar anchor |
+|------|--------------|------|-----------------|
+| Monthly on the 1st | 1 | Months | any 1st-of-month, e.g. `2026-01-01` |
+| Monthly on the 15th | 1 | Months | any 15th, e.g. `2026-01-15` |
+| Start of each quarter (Q1/Q2/Q3/Q4) | 1 | Quarters | `2026-01-01` |
+| Yearly on March 15 | 1 | Years | `2026-03-15` |
+| Every 90 days (rolling, no calendar lock) | 90 | Days | *(leave blank)* |
+
+### Device vs Virtual Machine
+
+A plan targets one and only one object. The form prevents picking both client-side; the server also rejects it.
+
+- **Device plans** show up under `dcim.Device` detail pages and in the device tab.
+- **Virtual Machine plans** show up under `virtualization.VirtualMachine` detail pages and in the VM tab.
 
 ### Best Practices
 
 - Use descriptive names that indicate the maintenance type (e.g., "Weekly Backup Verification")
 - Set realistic frequency intervals based on manufacturer recommendations
+- Use a **calendar anchor** for compliance-driven schedules (monthly, quarterly, yearly) — drift-free
 - Keep plans active for ongoing monitoring
-- Deactivate plans for devices being decommissioned
+- Deactivate plans for devices/VMs being decommissioned
 
 ---
 
@@ -136,15 +160,25 @@ Defines recurring maintenance requirements for devices.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `device` | ForeignKey | Links to a specific NetBox device |
+| `device` | ForeignKey (nullable) | Links to a NetBox device — exactly one of `device`/`virtual_machine` must be set |
+| `virtual_machine` | ForeignKey (nullable) | Links to a NetBox virtual machine — exactly one of `device`/`virtual_machine` must be set |
 | `name` | CharField | Descriptive name for the maintenance type |
 | `maintenance_type` | CharField | Type: `preventive` or `corrective` |
-| `frequency_days` | IntegerField | Maintenance interval in days |
+| `frequency_days` | PositiveIntegerField | Number of `frequency_unit`s between maintenances (legacy name; not strictly days anymore) |
+| `frequency_unit` | CharField | One of `days`, `weeks`, `months`, `quarters`, `years` (default `days`) |
+| `anchor_date` | DateField (nullable) | Optional calendar anchor — next due is the smallest `anchor + n × interval` strictly after the last completion |
 | `is_active` | BooleanField | Active/inactive flag |
 | `description` | TextField | Optional detailed description |
 
+**Properties**:
+
+- `target`: the linked Device or VirtualMachine (whichever is set)
+- `target_type`: `'device'` or `'virtualmachine'`
+- `get_frequency_display()`: human-readable frequency, e.g. `"1 Months"`
+
 **Methods**:
-- `get_next_maintenance_date()`: Calculate next due date
+
+- `get_next_maintenance_date()`: Calculate next due date (honors `anchor_date` when set)
 - `days_until_due()`: Calculate days until next maintenance
 - `is_overdue()`: Check if maintenance is overdue
 
@@ -195,7 +229,7 @@ curl -X GET "https://netbox.example.com/api/plugins/maintenance-device/maintenan
   -H "Accept: application/json"
 ```
 
-#### Create a Maintenance Plan
+#### Create a Maintenance Plan (Device, rolling 30 days)
 
 ```bash
 curl -X POST "https://netbox.example.com/api/plugins/maintenance-device/maintenance-plans/" \
@@ -206,6 +240,24 @@ curl -X POST "https://netbox.example.com/api/plugins/maintenance-device/maintena
     "name": "Monthly Backup Verification",
     "maintenance_type": "preventive",
     "frequency_days": 30,
+    "frequency_unit": "days",
+    "is_active": true
+  }'
+```
+
+#### Create a Maintenance Plan (Virtual Machine, calendar-anchored quarterly)
+
+```bash
+curl -X POST "https://netbox.example.com/api/plugins/maintenance-device/maintenance-plans/" \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "virtual_machine": 42,
+    "name": "Quarterly OS Patching",
+    "maintenance_type": "preventive",
+    "frequency_days": 1,
+    "frequency_unit": "quarters",
+    "anchor_date": "2026-01-01",
     "is_active": true
   }'
 ```
@@ -310,5 +362,5 @@ For issues, feature requests, or questions:
 ---
 
 **Last Updated**: May 2026  
-**Plugin Version**: 1.3.1  
+**Plugin Version**: 1.4.1  
 **NetBox Compatibility**: 4.4.x, 4.5.x, 4.6.x
