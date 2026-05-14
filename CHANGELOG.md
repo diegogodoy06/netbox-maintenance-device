@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-05-14
+
+### Fixed
+
+- **`TypeError: args or kwargs must be provided.` on NetBox 4.6.x list views**: Affected `/plugins/maintenance-device/maintenance-plans/` and `/plugins/maintenance-device/upcoming/`. Root cause: Django 6.0 (shipped with NetBox 4.6) now raises `TypeError` when `django.utils.html.format_html()` is called without any positional / keyword arguments. Previous Django versions only emitted a `DeprecationWarning`.
+- Replaced 10 unsafe `format_html('<span ...>literal</span>')` calls in `netbox_maintenance_device/tables.py` with `mark_safe(...)` (already imported), since those strings are fully static and contain no user input. The one remaining `format_html('... {} ...', abs(days))` call uses a placeholder and a positional arg, which remains valid under Django 6.0.
+
+### Technical Details
+
+Files Modified:
+
+- `netbox_maintenance_device/tables.py` – Replaced `format_html(static_html)` with `mark_safe(static_html)` in `MaintenancePlanTable.render_status`, `UpcomingMaintenanceTable.render_days_until`, `UpcomingMaintenanceTable.render_status`, and `UpcomingMaintenanceTable.render_actions`.
+- `netbox_maintenance_device/__init__.py` – Bumped `version` to `1.3.1`.
+- `pyproject.toml` – Bumped version to `1.3.1`.
+- `README.md` / `USAGE.md` / `CHANGELOG.md` – Version references updated.
+
 ## [1.3.0] - 2026-05-14
 
 ### Added
