@@ -74,7 +74,7 @@
                 </div>
             </div>
             <div class="mt-3 text-center">
-                <a href="{% url 'plugins:netbox_maintenance_device:device_maintenance_tab' pk=object.pk %}" class="btn btn-sm btn-outline-primary">
+                <a href="{% url maintenance_tab_url_name|default:'plugins:netbox_maintenance_device:device_maintenance_tab' pk=object.pk %}" class="btn btn-sm btn-outline-primary">
                     <i class="mdi mdi-calendar-clock"></i> {% trans "View All Maintenance" %}
                 </a>
             </div>
@@ -82,7 +82,7 @@
             <div class="text-center">
                 <p class="text-muted mb-2">{% trans "No maintenance plans configured" %}</p>
                 {% if perms.netbox_maintenance_device.add_maintenanceplan %}
-                    <a href="{% url 'plugins:netbox_maintenance_device:maintenanceplan_add' %}?device={{ object.pk }}" class="btn btn-sm btn-primary">
+                    <a href="{% url 'plugins:netbox_maintenance_device:maintenanceplan_add' %}?{{ target_kwarg|default:'device' }}={{ object.pk }}" class="btn btn-sm btn-primary">
                         <i class="mdi mdi-plus-thick"></i> {% trans "Add Plan" %}
                     </a>
                 {% endif %}
