@@ -35,6 +35,36 @@ class MaintenanceDeviceConfig(PluginConfig):
         # to avoid issues during initial Django setup and collectstatic operations
         import logging
         logger = logging.getLogger(__name__)
+        
+        # Register custom event types
+        try:
+            from netbox.events import (
+                EventType, EVENT_TYPE_KIND_WARNING, EVENT_TYPE_KIND_INFO, EVENT_TYPE_KIND_SUCCESS
+            )
+            from django.utils.translation import gettext
+            from netbox.registry import registry
+
+            # Overwrite registry directly to avoid duplicate registration errors on reload
+            # and use gettext (returning str) instead of gettext_lazy (returning proxy)
+            event_types = [
+                EventType('maintenance_due', gettext('Maintenance due'), kind=EVENT_TYPE_KIND_WARNING),
+                EventType('maintenance_scheduled', gettext('Maintenance scheduled'), kind=EVENT_TYPE_KIND_INFO),
+                EventType('maintenance_completed', gettext('Maintenance completed'), kind=EVENT_TYPE_KIND_SUCCESS),
+            ]
+            for et in event_types:
+                registry['event_types'][et.name] = et
+
+            logger.info("NetBox Maintenance Device: Custom event types registered successfully")
+        except Exception as e:
+            logger.error(f"NetBox Maintenance Device: Custom event types registration failed: {e}")
+
+        # Load system jobs to trigger registration
+        try:
+            import netbox_maintenance_device.jobs  # noqa: F401
+            logger.info("NetBox Maintenance Device: Custom system jobs loaded successfully")
+        except Exception as e:
+            logger.error(f"NetBox Maintenance Device: Custom system jobs load failed: {e}")
+
         logger.info("NetBox Maintenance Device v1.4.1 initialized successfully")
 
 config = MaintenanceDeviceConfig

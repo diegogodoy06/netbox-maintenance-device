@@ -84,6 +84,15 @@ class MaintenancePlan(NetBoxModel):
         verbose_name=_('Anchor Date'),
     )
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
+    last_notified_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "The last due date for which a notification was sent, to avoid "
+            "duplicate alerts."
+        ),
+        verbose_name=_('Last Notified Date'),
+    )
 
     class Meta:
         ordering = ['device', 'virtual_machine', 'name']
@@ -181,6 +190,8 @@ class MaintenancePlan(NetBoxModel):
             completed=True
         ).order_by('-completed_date').first()
         reference = last_execution.completed_date if last_execution else self.created
+        if reference is None:
+            reference = timezone.now()
 
         step = self._step_delta()
 
@@ -253,4 +264,26 @@ class MaintenanceExecution(NetBoxModel):
     def save(self, *args, **kwargs):
         # Auto-set completed flag based on status
         self.completed = self.status == 'completed'
+        
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            try:
+                old_status = MaintenanceExecution.objects.only('status').get(pk=self.pk).status
+            except MaintenanceExecution.DoesNotExist:
+                pass
+                
         super().save(*args, **kwargs)
+        
+        # Fire events
+        from .events import fire_event
+        if is_new:
+            if self.status == 'scheduled':
+                fire_event(self, 'maintenance_scheduled')
+            elif self.status == 'completed':
+                fire_event(self, 'maintenance_completed')
+        else:
+            if self.status == 'scheduled' and old_status != 'scheduled':
+                fire_event(self, 'maintenance_scheduled')
+            elif self.status == 'completed' and old_status != 'completed':
+                fire_event(self, 'maintenance_completed')
