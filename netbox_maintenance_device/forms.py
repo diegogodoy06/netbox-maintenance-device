@@ -5,8 +5,9 @@ from django.utils.translation import gettext_lazy as _
 
 from dcim.models import Device
 from netbox.filtersets import NetBoxModelFilterSet
-from netbox.forms import NetBoxModelForm
-from utilities.forms.fields import DynamicModelChoiceField
+from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
+from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES
+from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField, TagFilterField
 from utilities.forms.rendering import FieldSet
 from virtualization.models import VirtualMachine
 
@@ -138,3 +139,59 @@ class MaintenanceExecutionFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = models.MaintenanceExecution
         fields = ['maintenance_plan', 'status', 'completed']
+
+
+class MaintenancePlanFilterForm(NetBoxModelFilterSetForm):
+    model = models.MaintenancePlan
+    fieldsets = (
+        FieldSet('q', 'filter_id', 'tag'),
+        FieldSet('device', 'virtual_machine', name=_('Target')),
+        FieldSet('maintenance_type', 'frequency_unit', 'is_active', name=_('Attributes')),
+    )
+    device = DynamicModelMultipleChoiceField(
+        queryset=Device.objects.all(),
+        required=False,
+        label=_('Device')
+    )
+    virtual_machine = DynamicModelMultipleChoiceField(
+        queryset=VirtualMachine.objects.all(),
+        required=False,
+        label=_('Virtual machine')
+    )
+    maintenance_type = forms.MultipleChoiceField(
+        choices=models.MaintenancePlan.MAINTENANCE_TYPE_CHOICES,
+        required=False,
+        label=_('Maintenance type')
+    )
+    frequency_unit = forms.MultipleChoiceField(
+        choices=models.MaintenancePlan.FREQUENCY_UNIT_CHOICES,
+        required=False,
+        label=_('Frequency unit')
+    )
+    is_active = forms.NullBooleanField(
+        required=False,
+        label=_('Active'),
+        widget=forms.Select(
+            choices=BOOLEAN_WITH_BLANK_CHOICES
+        )
+    )
+    tag = TagFilterField(model)
+
+
+class MaintenanceExecutionFilterForm(NetBoxModelFilterSetForm):
+    model = models.MaintenanceExecution
+    fieldsets = (
+        FieldSet('q', 'filter_id', 'tag'),
+        FieldSet('maintenance_plan', 'status', name=_('Attributes')),
+    )
+    maintenance_plan = DynamicModelMultipleChoiceField(
+        queryset=models.MaintenancePlan.objects.all(),
+        required=False,
+        label=_('Maintenance plan')
+    )
+    status = forms.MultipleChoiceField(
+        choices=models.MaintenanceExecution.STATUS_CHOICES,
+        required=False,
+        label=_('Status')
+    )
+    tag = TagFilterField(model)
