@@ -7,7 +7,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("extras", "0138_customfieldchoiceset_choice_colors"),
+        # Pinning a concrete extras migration would break installs on NetBox
+        # < 4.6 (extras 0138 ships with 4.6.0); '__latest__' resolves on any
+        # supported version, matching the plugin's other migrations.
+        ("extras", "__latest__"),
         ("netbox_maintenance_device", "0003_virtual_machine_and_calendar_schedule"),
     ]
 

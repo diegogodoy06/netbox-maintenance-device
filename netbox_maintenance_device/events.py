@@ -2,7 +2,7 @@ import logging
 from django.conf import settings
 from django.utils.module_loading import import_string
 from core.models import ObjectType
-from extras.events import get_snapshots
+from extras.events import get_snapshots, serialize_for_event
 from netbox.context import current_request, events_queue
 
 logger = logging.getLogger('netbox.plugins.maintenance_device.events')
@@ -37,6 +37,11 @@ def fire_event(instance, event_type, request=None):
         'object_id': instance.pk,
         'object': instance,
         'event_type': event_type,
+        # Event pipeline consumers (process_event_rules) read event['data']
+        # unconditionally; NetBox 4.6's EventContext fills it lazily, but the
+        # plain-dict path (NetBox <= 4.5 and the immediate-flush branch below)
+        # must carry it eagerly or every matching event rule dies on KeyError.
+        'data': serialize_for_event(instance),
         'snapshots': get_snapshots(instance, event_type),
         'request': request,
         'user': user,
