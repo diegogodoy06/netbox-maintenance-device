@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-06-12
+
+### Added
+
+- **NetBox event system integration (#20)**: maintenance activity now fires native NetBox events, so event rules can trigger webhooks, notifications, and scripts.
+  - Three custom event types registered at startup: `maintenance_due` (warning), `maintenance_scheduled` (info), and `maintenance_completed` (success).
+  - Events fire automatically when a `MaintenanceExecution` is scheduled or completed.
+  - New `CheckMaintenanceJob` system job and `check_maintenance` management command periodically detect overdue plans and fire `maintenance_due` events.
+  - `MaintenancePlan` tracks the last notified date to prevent duplicate `maintenance_due` events for the same cycle.
+- Filter forms for `MaintenancePlan` and `MaintenanceExecution` list views.
+
+### Fixed
+
+- **NetBox < 4.6 compatibility** in the events migration and payload:
+  - Migration `0004` depended on `extras.0138` (which only ships with NetBox 4.6.0), making `migrate` fail with `NodeNotFoundError` on NetBox 4.4 / 4.5. It now depends on `extras.__latest__`, matching the plugin's other migrations.
+  - Event payloads now include the serialized object data eagerly. Without it, the plain-dict queue path (NetBox ≤ 4.5 fallback and the immediate-flush branch used by `check_maintenance` / `CheckMaintenanceJob`) raised `KeyError`, so `maintenance_due` notifications never fired outside an HTTP request.
+
+### Technical Details
+
+Files Modified / Added:
+
+- `netbox_maintenance_device/__init__.py` — custom event type registration, system jobs loading, version bump to `1.4.2`.
+- `netbox_maintenance_device/events.py` — new core events module; dispatches events safely within and outside HTTP request contexts.
+- `netbox_maintenance_device/jobs.py` — new `CheckMaintenanceJob` system job.
+- `netbox_maintenance_device/management/commands/check_maintenance.py` — new management command.
+- `netbox_maintenance_device/migrations/0004_remove_maintenanceplan_last_executed_and_more.py` — last-notified tracking field, `extras.__latest__` dependency.
+- `netbox_maintenance_device/models.py` — event dispatch on schedule / complete, last-notified tracking.
+- `netbox_maintenance_device/forms.py` — filter forms.
+- `pyproject.toml` — version bump to `1.4.2`.
+
 ## [1.4.1] - 2026-05-14
 
 ### Fixed
