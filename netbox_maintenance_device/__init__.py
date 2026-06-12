@@ -5,7 +5,7 @@ class MaintenanceDeviceConfig(PluginConfig):
     name = 'netbox_maintenance_device'
     verbose_name = _('NetBox Device Maintenance')
     description = 'Manage device preventive and corrective maintenance with multilingual support'
-    version = '1.4.1'
+    version = '1.4.2'
     author = 'Diego Godoy'
     author_email = 'diegoalex-gdy@outlook.com'
     base_url = 'maintenance-device'
@@ -65,6 +65,6 @@ class MaintenanceDeviceConfig(PluginConfig):
         except Exception as e:
             logger.error(f"NetBox Maintenance Device: Custom system jobs load failed: {e}")
 
-        logger.info("NetBox Maintenance Device v1.4.1 initialized successfully")
+        logger.info("NetBox Maintenance Device v1.4.2 initialized successfully")
 
 config = MaintenanceDeviceConfig
