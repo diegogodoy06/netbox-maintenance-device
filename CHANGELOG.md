@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-08-21
+
+### Fixed
+
+- **Custom event types missing from the Event Rule form's "Event types" dropdown.** `maintenance_due`, `maintenance_scheduled`, and `maintenance_completed` were listed on an event rule's detail view but could not be selected when creating or editing the rule, so no rule could ever be bound to them.
+
+  NetBox's `EventRuleForm` declares `event_types = forms.MultipleChoiceField(choices=get_event_type_choices())`. The call is evaluated once, when `extras.forms` is first imported, and Django freezes the result into `EventRuleForm.base_fields`. The plugin registered its event types from `AppConfig.ready()`, which is too late whenever another installed plugin listed earlier in `PLUGINS` imports `extras.forms` (directly, or transitively via `netbox.views.generic`) from its own `ready()`. The detail view was unaffected because it iterates the registry at render time.
+
+  Registration now happens at module import, while NetBox is still building `INSTALLED_APPS`, so it always precedes any app's `ready()`. The display text has to stay lazy at that point (`gettext()` raises `AppRegistryNotReady` that early), and `EventType.__str__` returns `self.text` verbatim — which raises `TypeError: __str__ returned non-string` for a lazy proxy when the detail view renders it — so the types are registered as a small `EventType` subclass that coerces its text to `str`.
+
+  Side effect: the three plugin event types now sort above NetBox's built-in ones in the dropdown and on the event rule detail view, since they are registered before `CoreConfig.ready()`.
+
+### Technical Details
+
+Files Modified:
+
+- `netbox_maintenance_device/__init__.py` — event types registered at module import via `_LazyEventType`; registration block removed from `ready()`; version bump to `1.4.3`.
+- `pyproject.toml`, `README.md`, `USAGE.md` — version bump to `1.4.3`.
+
 ## [1.4.2] - 2026-06-12
 
 ### Added
