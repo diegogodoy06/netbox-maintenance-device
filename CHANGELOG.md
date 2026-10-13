@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.4] - 2026-10-13
+
+### Added
+
+- **NetBox 4.7 support (#24)**, validated against the official 4.7.2 and 4.7.3 releases. The maximum supported version is now `4.7.99`; the minimum remains `4.4.0`.
+- Integration coverage and CI for supported NetBox families, Python 3.14 on 4.7.3, and database upgrades to 4.7.3 with device/VM maintenance history preservation.
+- [Critical compatibility analysis](docs/NETBOX_4.7_COMPATIBILITY.md) covering upstream API changes and the actual test results.
+
+### Fixed
+
+- **Database upgrades with the plugin already installed**: replaced moving `__latest__` migration dependencies with named migrations present in NetBox 4.4.0. Existing migration history now stays consistent when NetBox adds new migrations. No plugin schema changes or data resets are required.
+- **Background webhooks and scripts**: omit the absent request from modern event contexts so NetBox does not try to copy `None`. Preserve the mandatory request key for the legacy NetBox 4.4 processor and represent system events with no username instead of looking up a nonexistent `system` account.
+- **API scheduling**: validate and normalize execution data through `MaintenanceExecutionSerializer` before saving, so date strings do not break change logging or event serialization. Invalid dates return HTTP 400 before writing an execution.
+
+### Changed
+
+- Package discovery now includes only `netbox_maintenance_device`, keeping external NetBox checkouts out of distributions built by compatibility CI.
+- Corrected the compatibility table and Python requirements in the README to match the enforced version bounds and package metadata.
+
 ## [1.4.3] - 2026-08-21
 
 ### Fixed

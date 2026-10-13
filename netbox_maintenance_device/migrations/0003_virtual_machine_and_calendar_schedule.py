@@ -20,8 +20,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('netbox_maintenance_device', '0002_cleanup_notifications'),
-        ('dcim', '__latest__'),
-        ('virtualization', '__latest__'),
+        ('dcim', '0215_rackreservation_status'),
+        ('virtualization', '0048_populate_mac_addresses'),
     ]
 
     operations = [

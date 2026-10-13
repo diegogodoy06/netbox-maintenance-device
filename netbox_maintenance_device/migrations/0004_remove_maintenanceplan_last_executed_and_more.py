@@ -7,10 +7,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        # Pinning a concrete extras migration would break installs on NetBox
-        # < 4.6 (extras 0138 ships with 4.6.0); '__latest__' resolves on any
-        # supported version, matching the plugin's other migrations.
-        ("extras", "__latest__"),
+        # Tags/TaggedItem already exist in the NetBox 4.4.0 baseline. Avoid a
+        # moving dependency on new upstream migrations during upgrades.
+        ("extras", "0132_configcontextprofile"),
         ("netbox_maintenance_device", "0003_virtual_machine_and_calendar_schedule"),
     ]
 
