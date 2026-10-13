@@ -1,0 +1,146 @@
+name: NetBox compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: NetBox ${{ matrix.netbox }} / Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        netbox: ['4.4.0', '4.4.10', '4.5.10', '4.6.10', '4.7.2', '4.7.3']
+        python: ['3.12']
+        include:
+          - netbox: '4.7.3'
+            python: '3.14'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: netbox
+          POSTGRES_USER: netbox
+          POSTGRES_PASSWORD: netbox
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U netbox"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NETBOX_CONFIGURATION: netbox_maintenance_device.tests.configuration
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out official NetBox release
+        uses: actions/checkout@v4
+        with:
+          repository: netbox-community/netbox
+          ref: v${{ matrix.netbox }}
+          path: upstream
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install PostgreSQL build headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev
+      - name: Install NetBox and plugin
+        run: |
+          python -m pip install -r upstream/requirements.txt
+          python -m pip install .
+          mkdir -p upstream/netbox/project-static/docs
+      - name: Check application and apply migrations
+        run: |
+          python upstream/netbox/manage.py check
+          python upstream/netbox/manage.py migrate --no-input
+      - name: Run integration tests
+        run: python upstream/netbox/manage.py test netbox_maintenance_device.tests --no-input
+
+  upgrade:
+    name: Upgrade NetBox ${{ matrix.previous }} to 4.7.3
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        previous: ['4.4.0', '4.6.10']
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: netbox
+          POSTGRES_USER: netbox
+          POSTGRES_PASSWORD: netbox
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U netbox"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NETBOX_CONFIGURATION: netbox_maintenance_device.tests.configuration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: netbox-community/netbox
+          ref: v${{ matrix.previous }}
+          path: previous
+      - uses: actions/checkout@v4
+        with:
+          repository: netbox-community/netbox
+          ref: v4.7.3
+          path: latest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PostgreSQL build headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev
+      - name: Install both NetBox environments
+        run: |
+          python -m venv previous-env
+          python -m venv latest-env
+          previous-env/bin/pip install -r previous/requirements.txt
+          previous-env/bin/pip install .
+          latest-env/bin/pip install -r latest/requirements.txt
+          latest-env/bin/pip install .
+          mkdir -p previous/netbox/project-static/docs latest/netbox/project-static/docs
+      - name: Create earlier schema and maintenance history
+        run: |
+          previous-env/bin/python previous/netbox/manage.py migrate --no-input
+          previous-env/bin/python previous/netbox/manage.py shell --verbosity 0 -c \
+            "import json; from netbox_maintenance_device.tests.upgrade import seed_upgrade_data, upgrade_snapshot; seed_upgrade_data(); print(json.dumps(upgrade_snapshot(), default=str, sort_keys=True))" > before.json
+      - name: Upgrade and check preservation
+        run: |
+          latest-env/bin/python latest/netbox/manage.py migrate --no-input
+          latest-env/bin/python latest/netbox/manage.py check
+          latest-env/bin/python latest/netbox/manage.py shell --verbosity 0 -c \
+            "import json; from netbox_maintenance_device.tests.upgrade import upgrade_snapshot; print(json.dumps(upgrade_snapshot(), default=str, sort_keys=True))" > after.json
+          diff -u before.json after.json

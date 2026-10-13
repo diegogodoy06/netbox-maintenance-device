@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-maintenance-device"
-version = "1.4.3"
+version = "1.4.4"
 description = "NetBox plugin for device maintenance management with comprehensive REST API and Portuguese-BR support"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -60,7 +60,7 @@ dev = [
 "Changelog" = "https://github.com/diegogodoy06/netbox-maintenance-device/releases"
 
 [tool.setuptools]
-packages = {find = {}}
+packages = {find = {include = ["netbox_maintenance_device*"]}}
 include-package-data = true
 
 [tool.setuptools.package-data]

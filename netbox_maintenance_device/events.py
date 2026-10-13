@@ -1,11 +1,17 @@
 import logging
+from inspect import signature
 from django.conf import settings
 from django.utils.module_loading import import_string
 from core.models import ObjectType
-from extras.events import get_snapshots, serialize_for_event
+from extras.events import get_snapshots, process_event_rules, serialize_for_event
 from netbox.context import current_request, events_queue
 
 logger = logging.getLogger('netbox.plugins.maintenance_device.events')
+
+# NetBox 4.4 passes individual arguments to the rule processor and requires
+# event['request'], even without an HTTP request. Later processors accept the
+# event mapping and copy a request whenever that key is present.
+_LEGACY_EVENT_PIPELINE = 'event_type' in signature(process_event_rules).parameters
 
 
 def fire_event(instance, event_type, request=None):
@@ -29,7 +35,9 @@ def fire_event(instance, event_type, request=None):
             pass
 
     user = getattr(request, 'user', None) if request else None
-    username = user.username if user else 'system'
+    # The legacy processor looks up this username in the user table. A
+    # background event has no user; don't invent a nonexistent 'system' user.
+    username = user.username if user else None
     request_id = getattr(request, 'id', None)
 
     event_data = {
@@ -43,11 +51,14 @@ def fire_event(instance, event_type, request=None):
         # must carry it eagerly or every matching event rule dies on KeyError.
         'data': serialize_for_event(instance),
         'snapshots': get_snapshots(instance, event_type),
-        'request': request,
         'user': user,
         'username': username,
         'request_id': request_id,
     }
+    # NetBox copies a request whenever this key is present when dispatching
+    # webhooks and scripts. Background jobs have no request to copy.
+    if request is not None or _LEGACY_EVENT_PIPELINE:
+        event_data['request'] = request
 
     if queue is not None:
         app_label = instance._meta.app_label

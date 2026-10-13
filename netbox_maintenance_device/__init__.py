@@ -45,15 +45,15 @@ class MaintenanceDeviceConfig(PluginConfig):
     name = 'netbox_maintenance_device'
     verbose_name = _('NetBox Device Maintenance')
     description = 'Manage device preventive and corrective maintenance with multilingual support'
-    version = '1.4.3'
+    version = '1.4.4'
     author = 'Diego Godoy'
     author_email = 'diegoalex-gdy@outlook.com'
     base_url = 'maintenance-device'
     icon = 'mdi-wrench-cog'
 
-    # Required NetBox version - Compatible with 4.4.x, 4.5.x and 4.6.x
+    # Supported NetBox release families; keep newer minor releases gated until tested.
     min_version = '4.4.0'
-    max_version = '4.6.99'
+    max_version = '4.7.99'
     
     # Default configurations
     default_settings = {
@@ -83,6 +83,6 @@ class MaintenanceDeviceConfig(PluginConfig):
         except Exception as e:
             logger.error(f"NetBox Maintenance Device: Custom system jobs load failed: {e}")
 
-        logger.info("NetBox Maintenance Device v1.4.3 initialized successfully")
+        logger.info("NetBox Maintenance Device v1.4.4 initialized successfully")
 
 config = MaintenanceDeviceConfig

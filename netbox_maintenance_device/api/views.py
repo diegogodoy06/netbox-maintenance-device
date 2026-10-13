@@ -289,14 +289,20 @@ class MaintenancePlanViewSet(NetBoxModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Create new execution
-        execution = models.MaintenanceExecution.objects.create(
-            maintenance_plan=plan,
-            scheduled_date=scheduled_date,
-            notes=notes,
-            technician=technician,
-            status='scheduled'
+        # Normalize the datetime before saving: change logging and custom
+        # events render the instance before it can be reloaded from the DB.
+        execution_serializer = MaintenanceExecutionSerializer(
+            data={
+                'maintenance_plan': plan.pk,
+                'scheduled_date': scheduled_date,
+                'notes': notes,
+                'technician': technician,
+                'status': 'scheduled',
+            },
+            context=self.get_serializer_context(),
         )
+        execution_serializer.is_valid(raise_exception=True)
+        execution = execution_serializer.save()
         
         serializer = NestedMaintenanceExecutionSerializer(execution, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -10,8 +10,10 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('dcim', '__latest__'),
-        ('extras', '__latest__'),
+        # Stable dependencies available in the minimum supported NetBox 4.4.0.
+        # '__latest__' changes already-applied history on a NetBox upgrade.
+        ('dcim', '0215_rackreservation_status'),
+        ('extras', '0132_configcontextprofile'),
     ]
 
     operations = [
