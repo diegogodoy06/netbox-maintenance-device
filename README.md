@@ -36,7 +36,7 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 | < 4.4 | **Not Supported** | Below the plugin's minimum version |
 | >= 4.8 | **Not Supported** | Requires a separate compatibility review |
 
-> **Note**: Version 1.4.4 supports NetBox 4.4–4.7. See the [NetBox 4.7 compatibility analysis](docs/NETBOX_4.7_COMPATIBILITY.md) for upstream changes, upgrade validation, and test coverage. The configured version range remains bounded to `4.4.0`–`4.7.99`.
+> **Note**: Version 1.4.5 supports NetBox 4.4–4.7. See the [NetBox 4.7 compatibility analysis](docs/NETBOX_4.7_COMPATIBILITY.md) for upstream changes, upgrade validation, and test coverage. The configured version range remains bounded to `4.4.0`–`4.7.99`.
 
 > **Python Requirements**: This plugin requires Python 3.12 or later, including on NetBox 4.4. Use the Django and Python versions supported by your NetBox release; NetBox 4.7.3 pins Django 6.1.2.
 
@@ -53,12 +53,12 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 pip install netbox-maintenance-device
 
 # Or install a specific version
-pip install netbox-maintenance-device==1.4.4
+pip install netbox-maintenance-device==1.4.5
 ```
 
 **For Docker deployments**, add to your `plugin_requirements.txt`:
 ```bash
-echo "netbox-maintenance-device>=1.4.4" >> plugin_requirements.txt
+echo "netbox-maintenance-device>=1.4.5" >> plugin_requirements.txt
 ```
 
 ### Method 2: GitHub Installation

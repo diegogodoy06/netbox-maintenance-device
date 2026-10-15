@@ -1,7 +1,7 @@
 # Portuguese translations for netbox-maintenance-device.
 msgid ""
 msgstr ""
-"Project-Id-Version: netbox-maintenance-device 1.4.4\n"
+"Project-Id-Version: netbox-maintenance-device 1.4.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-15 00:00+0000\n"
 "PO-Revision-Date: 2026-10-15 00:00+0000\n"
