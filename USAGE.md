@@ -22,12 +22,21 @@ Complete guide for using the NetBox Maintenance Device Plugin.
 5. Choose between preventive or corrective maintenance type
 6. Configure the **Schedule**:
    - **Repeat every** + **Unit**: e.g. `1` + `Months` for monthly maintenance, `2` + `Weeks` for bi-weekly
+   - **Cycle start date** (optional): the actual installation or cycle start date for equipment already in use
    - **Calendar anchor** (optional): use to lock the schedule to a calendar date and avoid drift
 7. Save and activate the plan
 
+### Existing Equipment — Cycle Start Date
+
+Use **Cycle start date** to account for time before the plan was created. For example, a UPS battery installed on `2025-10-15`, with `Repeat every = 3` and `Unit = Years`, is due on `2028-10-15`, even if the plan is created in 2026. A start date of `2022-10-15` makes the first due date `2025-10-15`; the plan remains overdue until maintenance is recorded.
+
+The reference is the latest dated completed execution, then the cycle start date, then the plan creation timestamp. Leaving the start date blank preserves existing behavior. A future start date is also allowed; the first rolling due date is that date plus the interval. Dates are interpreted at midnight in the active timezone.
+
+**Calendar anchor** separately fixes the calendar phase. When both fields are set, the next due date is the first anchored occurrence strictly after the reference above. Set both to the installation date when you need that fixed calendar phase and need to retain missed cycles. An anchor alone retains its existing behavior of choosing an occurrence after plan creation when there is no execution history.
+
 ### Calendar Anchor — Common Patterns
 
-The anchor controls where the schedule lands on the calendar. Without it, the next due date is `last_completion + interval`, which drifts as completions happen on different days. With it, the next due date is always the next `anchor + n × interval` strictly after the last completion.
+The anchor controls where the schedule lands on the calendar. Without it, the next due date is `reference + interval`, which drifts as completions happen on different days. With it, the next due date is the next `anchor + n × interval` strictly after the reference. Every occurrence is calculated from the original anchor, so the 31st and February 29 return when the calendar permits them.
 
 | Goal | Repeat every | Unit | Calendar anchor |
 |------|--------------|------|-----------------|
@@ -102,6 +111,8 @@ A plan targets one and only one object. The form prevents picking both client-si
 3. Select the plan, set dates, and update status
 4. Add detailed notes and technician information
 
+Completed history can also be imported through the REST API, including records older than 365 days. Supply `status = completed`, the actual `scheduled_date` and `completed_date`. The completion cannot precede the scheduled date or be in the future. The 365-day scheduled-date limit remains for records that are not completed.
+
 ### Completion Best Practices
 
 - Always add meaningful notes about work performed
@@ -166,7 +177,8 @@ Defines recurring maintenance requirements for devices.
 | `maintenance_type` | CharField | Type: `preventive` or `corrective` |
 | `frequency_days` | PositiveIntegerField | Number of `frequency_unit`s between maintenances (legacy name; not strictly days anymore) |
 | `frequency_unit` | CharField | One of `days`, `weeks`, `months`, `quarters`, `years` (default `days`) |
-| `anchor_date` | DateField (nullable) | Optional calendar anchor — next due is the smallest `anchor + n × interval` strictly after the last completion |
+| `start_date` | DateField (nullable) | Installation or cycle start date, used until a dated completed execution exists; blank keeps the creation-date fallback |
+| `anchor_date` | DateField (nullable) | Optional calendar anchor — next due is the smallest `anchor + n × interval` strictly after the reference (completion, start date or creation) |
 | `is_active` | BooleanField | Active/inactive flag |
 | `description` | TextField | Optional detailed description |
 

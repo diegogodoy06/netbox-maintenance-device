@@ -27,6 +27,7 @@ def seed_upgrade_data():
             name="Upgrade plan",
             frequency_days=1,
             frequency_unit="quarters",
+            start_date=date(2025, 10, 1),
             anchor_date=date(2026, 1, 1),
             last_notified_date=date(2026, 7, 1),
         )
@@ -53,6 +54,7 @@ def upgrade_snapshot():
                 "target_type": plan.target_type,
                 "frequency_days": plan.frequency_days,
                 "frequency_unit": plan.frequency_unit,
+                "start_date": plan.start_date.isoformat() if plan.start_date else None,
                 "anchor_date": plan.anchor_date.isoformat(),
                 "last_notified_date": plan.last_notified_date.isoformat(),
                 "next_due": plan.get_next_maintenance_date().isoformat(),

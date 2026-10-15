@@ -1,4 +1,5 @@
 {% extends 'generic/object.html' %}
+{% load i18n %}
 
 {% block content %}
 <div class="row">
@@ -36,6 +37,10 @@
                 <tr>
                     <td>Frequency</td>
                     <td>{{ object.get_frequency_display }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans "Cycle Start Date" %}</td>
+                    <td>{% if object.start_date %}{{ object.start_date|date:"Y-m-d" }}{% else %}—{% endif %}</td>
                 </tr>
                 <tr>
                     <td>Anchor Date</td>

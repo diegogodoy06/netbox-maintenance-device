@@ -12,6 +12,7 @@ A comprehensive NetBox plugin for managing device preventive and corrective main
 ## Features
 
 - **Maintenance Plans**: Create and manage maintenance plans for devices **and virtual machines** with configurable frequency
+- **Cycle Start Date**: Use the actual installation or cycle start date when registering existing equipment, retaining overdue cycles instead of starting over at plan creation (#26)
 - **Virtual Machine Support**: Plans can target either a `dcim.Device` or a `virtualization.VirtualMachine`, with the same UX on both detail pages (#14)
 - **Calendar-based Scheduling**: Schedule every N days / weeks / months / quarters / years, with an optional **calendar anchor** to avoid drift — e.g. "1st day of every month" or "start of each quarter" stays aligned with the calendar regardless of when previous executions happened (#15)
 - **Maintenance Executions**: Record and track maintenance executions with status monitoring

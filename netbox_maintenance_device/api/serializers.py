@@ -69,7 +69,7 @@ class MaintenancePlanSerializer(NetBoxModelSerializer):
         model = models.MaintenancePlan
         fields = [
             'id', 'url', 'display', 'device', 'virtual_machine', 'name', 'description',
-            'maintenance_type', 'frequency_days', 'frequency_unit', 'anchor_date',
+            'maintenance_type', 'frequency_days', 'frequency_unit', 'start_date', 'anchor_date',
             'is_active',
             'created', 'last_updated', 'custom_field_data', 'tags',
             # Relationships
@@ -130,7 +130,9 @@ class MaintenancePlanSerializer(NetBoxModelSerializer):
         data['target_type'] = instance.target_type
 
         # Add last execution date
-        last_execution = instance.executions.filter(completed=True).order_by('-completed_date').first()
+        last_execution = instance.executions.filter(
+            completed=True, completed_date__isnull=False
+        ).order_by('-completed_date').first()
         data['last_execution_date'] = last_execution.completed_date if last_execution else None
 
         return data
@@ -177,12 +179,6 @@ class MaintenanceExecutionSerializer(NetBoxModelSerializer):
             return delta.days
         return None
     
-    def validate_scheduled_date(self, value):
-        """Validate scheduled date is not too far in the past"""
-        if value and value.date() < (timezone.now().date() - timezone.timedelta(days=365)):
-            raise serializers.ValidationError("Scheduled date cannot be more than 1 year in the past")
-        return value
-    
     def validate_completed_date(self, value):
         """Validate completed date is not in the future"""
         if value and value.date() > timezone.now().date():
@@ -191,9 +187,21 @@ class MaintenanceExecutionSerializer(NetBoxModelSerializer):
     
     def validate(self, data):
         """Additional model-level validations"""
-        scheduled_date = data.get('scheduled_date')
-        completed_date = data.get('completed_date')
-        status = data.get('status')
+        # Merge partial updates with persisted values so historical completions
+        # can be edited without resubmitting their dates and status.
+        scheduled_date = data.get('scheduled_date', getattr(self.instance, 'scheduled_date', None))
+        completed_date = data.get('completed_date', getattr(self.instance, 'completed_date', None))
+        status = data.get('status', getattr(self.instance, 'status', 'scheduled'))
+
+        if (
+            status != 'completed'
+            and scheduled_date
+            and (self.instance is None or 'scheduled_date' in data or 'status' in data)
+            and scheduled_date.date() < (timezone.now().date() - timezone.timedelta(days=365))
+        ):
+            raise serializers.ValidationError({
+                'scheduled_date': "Scheduled date cannot be more than 1 year in the past"
+            })
         
         # If status is completed, completed_date should be set
         if status == 'completed' and not completed_date:
