@@ -1,8 +1,18 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHmsgid "Processing..."
-msgstr "Processando..."
+# Portuguese translations for netbox-maintenance-device.
+msgid ""
+msgstr ""
+"Project-Id-Version: netbox-maintenance-device 1.4.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-15 00:00+0000\n"
+"PO-Revision-Date: 2026-10-15 00:00+0000\n"
+"Last-Translator: \n"
+"Language: pt_BR\n"
+"Language-Team: \n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
 
 msgid "Error completing maintenance. Please try again."
 msgstr "Erro ao concluir manutenção. Tente novamente."
@@ -44,22 +54,7 @@ msgid "Maintenance due soon"
 msgstr "Manutenção vence em breve"
 
 msgid "All maintenance up to date"
-msgstr "Toda manutenção em dia"ESS>, YEAR.
-#
-#, fuzzy
-msgid ""
-msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-01 00:00+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+msgstr "Toda manutenção em dia"
 
 msgid "Preventive"
 msgstr "Preventiva"
@@ -211,15 +206,6 @@ msgstr "Nenhuma manutenção próxima ou vencida encontrada."
 msgid "Processing..."
 msgstr "Processando..."
 
-msgid "Error completing maintenance. Please try again."
-msgstr "Erro ao concluir manutenção. Tente novamente."
-
-msgid "Upcoming Maintenance"
-msgstr "Manutenção Próxima"
-
-msgid "Add"
-msgstr "Adicionar"
-
 msgid "Maintenance Execution"
 msgstr "Execução de Manutenção"
 
@@ -232,20 +218,21 @@ msgstr "Plano de Manutenção"
 msgid "Device Maintenance"
 msgstr "Manutenção de Dispositivos"
 
-msgid "Maintenance"
-msgstr "Manutenção"
-
-msgid "Maintenance Executions"
-msgstr "Execuções de Manutenção"
-
 msgid "View Details"
 msgstr "Ver Detalhes"
 
-msgid "Scheduled"
-msgstr "Agendado"
-
-msgid "Completed"
-msgstr "Concluído"
-
 msgid "NetBox Device Maintenance"
 msgstr "NetBox Manutenção de Dispositivos"
+
+msgid "Cycle Start Date"
+msgstr "Data de início do ciclo"
+
+msgid "Cycle start date (optional)"
+msgstr "Data de início do ciclo (opcional)"
+
+msgid ""
+"Installation date or start of the maintenance cycle, used until the first completed maintenance. "
+"Leave blank to use the plan creation date."
+msgstr ""
+"Data de instalação ou início do ciclo de manutenção, usada até a primeira manutenção concluída. "
+"Deixe em branco para usar a data de criação do plano."

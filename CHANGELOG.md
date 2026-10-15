@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Optional **Cycle start date** for maintenance plans (#26), available in the form, REST API, plan details and optional table column. Existing installations can retain their original maintenance cycle and overdue dates without changing the plan's creation timestamp.
+
+### Fixed
+
+- Calendar anchors now calculate each occurrence from the original anchor, preserving month-end and leap-day dates and handling schedules more than 10,000 intervals old.
+- The execution API accepts completed maintenance history older than 365 days and validates partial updates against saved dates and status. The existing age limit remains for pending schedules.
+- Portuguese translation catalogs are valid and include the new cycle-start field.
+
 ## [1.4.4] - 2026-10-13
 
 ### Added

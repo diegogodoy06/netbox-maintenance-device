@@ -7,7 +7,7 @@ from . import models
 class MaintenancePlanAdmin(admin.ModelAdmin):
     list_display = [
         'name', 'device', 'virtual_machine', 'maintenance_type',
-        'frequency_days', 'frequency_unit', 'anchor_date', 'is_active', 'created',
+        'frequency_days', 'frequency_unit', 'start_date', 'anchor_date', 'is_active', 'created',
     ]
     list_filter = ['maintenance_type', 'frequency_unit', 'is_active', 'created']
     search_fields = ['device__name', 'virtual_machine__name', 'name', 'description']

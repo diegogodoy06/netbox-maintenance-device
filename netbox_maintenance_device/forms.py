@@ -39,10 +39,16 @@ class MaintenancePlanForm(NetBoxModelForm):
         label=_('Unit'),
         help_text=_("Days / weeks / months / quarters / years."),
     )
+    start_date = forms.DateField(
+        required=False,
+        label=_('Cycle start date (optional)'),
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+        help_text=models.MaintenancePlan._meta.get_field('start_date').help_text,
+    )
     anchor_date = forms.DateField(
         required=False,
         label=_('Calendar anchor (optional)'),
-        widget=forms.DateInput(attrs={'type': 'date'}),
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         help_text=_(
             "Use this to lock the schedule to a calendar date and avoid drift. "
             "Examples: pick any 1st-of-month to schedule on the 1st of every month; "
@@ -54,7 +60,7 @@ class MaintenancePlanForm(NetBoxModelForm):
     fieldsets = (
         FieldSet('name', 'description', 'maintenance_type', 'is_active', name=_('Plan')),
         FieldSet('device', 'virtual_machine', name=_('Target')),
-        FieldSet('frequency_days', 'frequency_unit', 'anchor_date', name=_('Schedule')),
+        FieldSet('frequency_days', 'frequency_unit', 'start_date', 'anchor_date', name=_('Schedule')),
         FieldSet('tags', name=_('Tags')),
     )
 
@@ -62,7 +68,7 @@ class MaintenancePlanForm(NetBoxModelForm):
         model = models.MaintenancePlan
         fields = [
             'device', 'virtual_machine', 'name', 'description', 'maintenance_type',
-            'frequency_days', 'frequency_unit', 'anchor_date', 'is_active', 'tags',
+            'frequency_days', 'frequency_unit', 'start_date', 'anchor_date', 'is_active', 'tags',
         ]
 
     class Media:

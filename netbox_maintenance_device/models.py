@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
@@ -10,11 +10,6 @@ from django.utils.translation import gettext_lazy as _
 from dcim.models import Device
 from netbox.models import NetBoxModel
 from virtualization.models import VirtualMachine
-
-
-# Max iterations when stepping forward from an anchor_date to the next due date.
-# Bounds the loop so a degenerate (zero-width) step can never spin forever.
-_ANCHOR_STEP_MAX_ITERATIONS = 10000
 
 
 class MaintenancePlan(NetBoxModel):
@@ -72,6 +67,15 @@ class MaintenancePlan(NetBoxModel):
         choices=FREQUENCY_UNIT_CHOICES,
         default='days',
         verbose_name=_('Frequency Unit'),
+    )
+    start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "Installation date or start of the maintenance cycle, used until "
+            "the first completed maintenance. Leave blank to use the plan creation date."
+        ),
+        verbose_name=_('Cycle Start Date'),
     )
     anchor_date = models.DateField(
         null=True,
@@ -183,13 +187,19 @@ class MaintenancePlan(NetBoxModel):
           of when previous executions actually happened.
         - Interval mode (no anchor): returns reference + step.
 
-        Reference date is the last completed execution's `completed_date`, or
-        the plan's `created` timestamp if there are no completed executions.
+        Reference date is the last dated completion, then `start_date`, then
+        the plan's `created` timestamp. A historical start preserves overdue
+        cycles when an existing installation is first registered.
         """
         last_execution = self.executions.filter(
-            completed=True
+            completed=True, completed_date__isnull=False
         ).order_by('-completed_date').first()
-        reference = last_execution.completed_date if last_execution else self.created
+        if last_execution:
+            reference = last_execution.completed_date
+        elif self.start_date:
+            reference = timezone.make_aware(datetime.combine(self.start_date, time.min))
+        else:
+            reference = self.created
         if reference is None:
             reference = timezone.now()
 
@@ -201,11 +211,25 @@ class MaintenancePlan(NetBoxModel):
             )
             if anchor_dt > reference:
                 return anchor_dt
-            candidate = anchor_dt
-            for _i in range(_ANCHOR_STEP_MAX_ITERATIONS):
-                candidate = candidate + step
-                if candidate > reference:
-                    return candidate
+            # Estimate the occurrence index in the anchor's local calendar.
+            # Always add to the original anchor: repeated additions lose the
+            # 31st / February 29 after an intervening shorter month or year.
+            local_reference = timezone.localtime(reference, anchor_dt.tzinfo)
+            count = self.frequency_days or 1
+            month_units = {'months': 1, 'quarters': 3, 'years': 12}
+            if self.frequency_unit in month_units:
+                months = (
+                    (local_reference.year - self.anchor_date.year) * 12
+                    + local_reference.month - self.anchor_date.month
+                )
+                occurrence = months // (count * month_units[self.frequency_unit])
+            else:
+                days = (local_reference.date() - self.anchor_date).days
+                period_days = count * (7 if self.frequency_unit == 'weeks' else 1)
+                occurrence = days // period_days
+            candidate = anchor_dt + occurrence * step
+            if candidate <= reference:
+                candidate = anchor_dt + (occurrence + 1) * step
             return candidate
 
         return reference + step

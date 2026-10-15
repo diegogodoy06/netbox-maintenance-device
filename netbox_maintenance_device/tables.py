@@ -52,6 +52,7 @@ class MaintenancePlanTable(NetBoxTable):
         verbose_name=_('Frequency'),
         orderable=False,
     )
+    start_date = tables.Column(verbose_name=_('Cycle Start Date'))
     anchor_date = tables.Column(verbose_name=_('Anchor'))
     next_maintenance = tables.Column(empty_values=(), verbose_name=_('Next Due'), orderable=False)
     status = tables.Column(empty_values=(), verbose_name=_('Status'), orderable=False)
@@ -60,7 +61,7 @@ class MaintenancePlanTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = models.MaintenancePlan
         fields = ('pk', 'target', 'target_type', 'name', 'maintenance_type',
-                  'frequency', 'anchor_date', 'next_maintenance', 'status',
+                  'frequency', 'start_date', 'anchor_date', 'next_maintenance', 'status',
                   'is_active', 'created', 'last_updated')
         default_columns = ('target', 'target_type', 'name', 'maintenance_type',
                            'frequency', 'next_maintenance', 'status', 'is_active')
