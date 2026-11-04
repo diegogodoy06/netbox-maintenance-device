@@ -1,3 +1,6 @@
+from datetime import datetime
+from functools import wraps
+
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -12,8 +15,10 @@ import json
 import logging
 from netbox.views import generic
 from dcim.models import Device
+from utilities.exceptions import PermissionsViolation
 from virtualization.models import VirtualMachine
 from . import forms, models, tables
+from .permissions import save_restricted
 
 logger = logging.getLogger('netbox.plugins.netbox_maintenance_device')
 
@@ -26,6 +31,13 @@ class MaintenancePlanListView(generic.ObjectListView):
 
 class MaintenancePlanView(generic.ObjectView):
     queryset = models.MaintenancePlan.objects.all()
+
+    def get_extra_context(self, request, instance):
+        executions = instance.executions.restrict(request.user, 'view')
+        return {
+            'recent_executions': executions[:5],
+            'execution_count': executions.count(),
+        }
 
 
 class MaintenancePlanEditView(generic.ObjectEditView):
@@ -93,7 +105,8 @@ class UpcomingMaintenanceView(generic.ObjectListView):
 
     def _base_queryset(self, request):
         return (
-            models.MaintenancePlan.objects.filter(is_active=True)
+            models.MaintenancePlan.objects.restrict(request.user, 'view')
+            .filter(is_active=True)
             .select_related('device', 'virtual_machine')
             .prefetch_related('executions')
         )
@@ -123,6 +136,13 @@ class UpcomingMaintenanceView(generic.ObjectListView):
             qs = qs.filter(pk__in=matching_pks)
 
         return qs
+
+    def get_table(self, data, request, bulk_actions=True):
+        table = super().get_table(data, request, bulk_actions)
+        # The action buttons depend on the user's permissions. NetBox tables aren't
+        # given the user consistently across supported versions.
+        table.request_user = request.user
+        return table
 
     def get_extra_context(self, request):
         context = super().get_extra_context(request)
@@ -219,135 +239,150 @@ def virtualmachine_maintenance_tab(request, pk):
     return render(request, 'netbox_maintenance_device/device_maintenance_tab.html', context)
 
 
-@login_required
-@require_http_methods(["POST"])
+def _json_error(message, status):
+    return JsonResponse({'success': False, 'error': str(message)}, status=status)
+
+
+def _parse_pk(value):
+    """Return `value` as an integer primary key, or None if it isn't one."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _display_name(user):
+    return f"{user.first_name} {user.last_name}".strip() or user.username
+
+
+def _ajax_action(view):
+    """Make a POST-only view answer with JSON, which is what its fetch() callers parse.
+
+    This includes the failures that would otherwise be a login redirect or an HTML
+    error page. Unexpected errors are logged without exposing any detail to the client.
+    """
+    @wraps(view)
+    @require_http_methods(["POST"])
+    def wrapper(request):
+        if not request.user.is_authenticated:
+            return _json_error(_('Authentication required'), 401)
+        try:
+            return view(request)
+        except Http404:
+            return _json_error(_('Not found, or you do not have permission to access it'), 404)
+        except PermissionsViolation:
+            return _json_error(_('Permission denied'), 403)
+        except Exception:
+            logger.exception('Error handling %s', view.__name__)
+            return _json_error(_('An unexpected error occurred'), 500)
+    return wrapper
+
+
+def _get_plan_for_new_execution(request, plan_id):
+    """Return (plan, None), or (None, error response) if an execution can't be added."""
+    if not request.user.has_perm('netbox_maintenance_device.add_maintenanceexecution'):
+        return None, _json_error(_('Permission denied'), 403)
+    pk = _parse_pk(plan_id)
+    if pk is None:
+        return None, _json_error(_('Invalid maintenance plan ID'), 400)
+    plan = get_object_or_404(models.MaintenancePlan.objects.restrict(request.user, 'view'), pk=pk)
+    return plan, None
+
+
+@_ajax_action
 def quick_complete_maintenance(request):
     """Quick completion of maintenance via AJAX"""
-    try:
-        execution_id = request.POST.get('execution_id')
-        plan_id = request.POST.get('plan_id')
-        device_id = request.POST.get('device_id')
-        technician = request.POST.get('technician', '')
-        notes = request.POST.get('notes', '')
+    execution_id = request.POST.get('execution_id')
+    plan_id = request.POST.get('plan_id')
+    device_id = request.POST.get('device_id')
+    technician = request.POST.get('technician', '')
+    notes = request.POST.get('notes', '')
 
-        if execution_id:
-            # Complete existing execution
-            execution = get_object_or_404(
-                models.MaintenanceExecution.objects.restrict(request.user, 'change'),
-                pk=execution_id,
-            )
-            execution.status = 'completed'
-            execution.completed_date = timezone.now()
-            execution.technician = technician
-            if notes:
-                execution.notes = notes
-            execution.save()
+    if execution_id:
+        # Complete existing execution
+        pk = _parse_pk(execution_id)
+        if pk is None:
+            return _json_error(_('Invalid maintenance execution ID'), 400)
+        execution = get_object_or_404(
+            models.MaintenanceExecution.objects.restrict(request.user, 'change'),
+            pk=pk,
+        )
+        if execution.status in ('completed', 'cancelled'):
+            return _json_error(_('This maintenance execution is already completed or cancelled'), 400)
 
-            return JsonResponse({
-                'success': True,
-                'message': str(_('Maintenance execution completed successfully'))
-            })
+        execution.snapshot()
+        execution.status = 'completed'
+        execution.completed_date = timezone.now()
+        execution.technician = technician or execution.technician or _display_name(request.user)
+        if notes:
+            execution.notes = notes
+        save_restricted(execution, request.user, 'change')
 
-        elif plan_id and device_id:
-            # Create and complete new execution for the plan
-            if not request.user.has_perm('netbox_maintenance_device.add_maintenanceexecution'):
-                return JsonResponse({
-                    'success': False,
-                    'error': str(_('Permission denied'))
-                }, status=403)
-            plan = get_object_or_404(
-                models.MaintenancePlan.objects.restrict(request.user, 'view'), pk=plan_id
-            )
-
-            # Use logged user as technician if not provided
-            if not technician:
-                technician = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
-
-            execution = models.MaintenanceExecution.objects.create(
-                maintenance_plan=plan,
-                scheduled_date=timezone.now(),
-                completed_date=timezone.now(),
-                status='completed',
-                technician=technician,
-                notes=notes or 'Completed via quick action'
-            )
-
-            return JsonResponse({
-                'success': True,
-                'message': str(_('Maintenance scheduled and completed successfully'))
-            })
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': str(_('Missing required parameters'))
-            }, status=400)
-
-    except Http404:
-        raise
-    except Exception:
-        logger.exception('Error completing maintenance execution')
         return JsonResponse({
-            'success': False,
-            'error': str(_('An unexpected error occurred'))
-        }, status=500)
+            'success': True,
+            'message': str(_('Maintenance execution completed successfully'))
+        })
+
+    if plan_id and device_id:
+        # Create and complete new execution for the plan
+        plan, error = _get_plan_for_new_execution(request, plan_id)
+        if error:
+            return error
+
+        now = timezone.now()
+        execution = models.MaintenanceExecution(
+            maintenance_plan=plan,
+            scheduled_date=now,
+            completed_date=now,
+            status='completed',
+            technician=technician or _display_name(request.user),
+            notes=notes or 'Completed via quick action'
+        )
+        save_restricted(execution, request.user, 'add')
+
+        return JsonResponse({
+            'success': True,
+            'message': str(_('Maintenance scheduled and completed successfully'))
+        })
+
+    return _json_error(_('Missing required parameters'), 400)
 
 
-@login_required
-@require_http_methods(["POST"])
+@_ajax_action
 def schedule_maintenance(request):
     """Schedule maintenance for a plan"""
-    try:
-        plan_id = request.POST.get('plan_id')
-        scheduled_date = request.POST.get('scheduled_date')
-        technician = request.POST.get('technician', '')
-        notes = request.POST.get('notes', '')
+    plan_id = request.POST.get('plan_id')
+    scheduled_date = request.POST.get('scheduled_date')
+    technician = request.POST.get('technician', '')
+    notes = request.POST.get('notes', '')
 
-        if not plan_id:
-            return JsonResponse({
-                'success': False,
-                'error': str(_('Missing maintenance plan ID'))
-            }, status=400)
+    if not plan_id:
+        return _json_error(_('Missing maintenance plan ID'), 400)
 
-        if not request.user.has_perm('netbox_maintenance_device.add_maintenanceexecution'):
-            return JsonResponse({
-                'success': False,
-                'error': str(_('Permission denied'))
-            }, status=403)
-        plan = get_object_or_404(
-            models.MaintenancePlan.objects.restrict(request.user, 'view'), pk=plan_id
-        )
+    plan, error = _get_plan_for_new_execution(request, plan_id)
+    if error:
+        return error
 
-        # Use logged user as technician if not provided
-        if not technician:
-            technician = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
+    # Use provided date or next maintenance date
+    if scheduled_date:
+        try:
+            scheduled_datetime = timezone.make_aware(datetime.strptime(scheduled_date, '%Y-%m-%d'))
+        except ValueError:
+            return _json_error(_('Invalid scheduled date'), 400)
+    else:
+        scheduled_datetime = plan.get_next_maintenance_date() or timezone.now()
 
-        # Use provided date or next maintenance date
-        if scheduled_date:
-            from datetime import datetime
-            scheduled_datetime = datetime.strptime(scheduled_date, '%Y-%m-%d')
-            scheduled_datetime = timezone.make_aware(scheduled_datetime)
-        else:
-            scheduled_datetime = plan.get_next_maintenance_date() or timezone.now()
-        
-        execution = models.MaintenanceExecution.objects.create(
-            maintenance_plan=plan,
-            scheduled_date=scheduled_datetime,
-            status='scheduled',
-            technician=technician,
-            notes=notes  # Don't add default note
-        )
-        
-        return JsonResponse({
-            'success': True, 
-            'message': str(_('Maintenance scheduled successfully')),
-            'execution_id': execution.pk
-        })
-        
-    except Http404:
-        raise
-    except Exception:
-        logger.exception('Error scheduling maintenance')
-        return JsonResponse({
-            'success': False,
-            'error': str(_('An unexpected error occurred'))
-        }, status=500)
+    execution = models.MaintenanceExecution(
+        maintenance_plan=plan,
+        scheduled_date=scheduled_datetime,
+        status='scheduled',
+        technician=technician or _display_name(request.user),
+        notes=notes  # Don't add default note
+    )
+    save_restricted(execution, request.user, 'add')
+
+    return JsonResponse({
+        'success': True,
+        'message': str(_('Maintenance scheduled successfully')),
+        'execution_id': execution.pk
+    })

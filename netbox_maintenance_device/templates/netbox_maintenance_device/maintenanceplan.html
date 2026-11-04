@@ -74,7 +74,7 @@
         <div class="card">
             <h5 class="card-header">Recent Executions</h5>
             <div class="card-body">
-                {% if object.executions.all %}
+                {% if recent_executions %}
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -84,7 +84,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for execution in object.executions.all|slice:":5" %}
+                            {% for execution in recent_executions %}
                             <tr>
                                 <td><a href="{{ execution.get_absolute_url }}">{{ execution.scheduled_date|date:"Y-m-d H:i" }}</a></td>
                                 <td>
@@ -97,10 +97,10 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    {% if object.executions.count > 5 %}
+                    {% if execution_count > 5 %}
                         <p class="text-muted">
                             <a href="{% url 'plugins:netbox_maintenance_device:maintenanceexecution_list' %}?maintenance_plan={{ object.pk }}">
-                                View all {{ object.executions.count }} executions →
+                                View all {{ execution_count }} executions →
                             </a>
                         </p>
                     {% endif %}

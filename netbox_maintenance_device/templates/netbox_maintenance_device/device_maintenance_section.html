@@ -31,13 +31,15 @@
                                             {% endif %}
                                         </div>
                                         <div class="btn-group btn-group-sm" role="group">
+                                            {% if perms.netbox_maintenance_device.add_maintenanceexecution %}
                                             <button type="button" class="btn btn-outline-primary btn-sm schedule-btn" 
                                                     data-plan-id="{{ plan.pk }}" 
                                                     data-plan-name="{{ plan.name }}"
                                                     title="{% trans 'Schedule Maintenance' %}">
                                                 <i class="mdi mdi-calendar-plus"></i>
                                             </button>
-                                            {% if plan.pending_execution %}
+                                            {% endif %}
+                                            {% if plan.pending_execution and perms.netbox_maintenance_device.change_maintenanceexecution %}
                                                 <button type="button" class="btn btn-outline-success btn-sm complete-btn" 
                                                         data-execution-id="{{ plan.pending_execution.pk }}" 
                                                         data-plan-name="{{ plan.name }}"

@@ -209,19 +209,25 @@ class UpcomingMaintenanceTable(NetBoxTable):
         return mark_safe('<span class="badge badge-success">On Track</span>')
 
     def render_actions(self, record):
+        # Set by UpcomingMaintenanceView; without it, no action can be offered.
+        user = getattr(self, 'request_user', None)
+        if user is None:
+            return '-'
+
         actions = []
         plan_name = escape(record.name)
 
-        actions.append(
-            '<button type="button" class="btn btn-sm btn-outline-primary schedule-btn mr-1 maintenance-action-btn" '
-            'data-plan-id="{}" data-plan-name="{}" '
-            'title="Schedule Maintenance" '
-            'onclick="return false;">'
-            '<i class="mdi mdi-calendar-plus"></i> Schedule'
-            '</button>'.format(record.pk, plan_name)
-        )
+        if user.has_perm('netbox_maintenance_device.add_maintenanceexecution'):
+            actions.append(
+                '<button type="button" class="btn btn-sm btn-outline-primary schedule-btn mr-1 maintenance-action-btn" '
+                'data-plan-id="{}" data-plan-name="{}" '
+                'title="Schedule Maintenance" '
+                'onclick="return false;">'
+                '<i class="mdi mdi-calendar-plus"></i> Schedule'
+                '</button>'.format(record.pk, plan_name)
+            )
 
-        pending_execution = record.executions.filter(
+        pending_execution = record.executions.restrict(user, 'change').filter(
             status__in=['scheduled', 'in_progress']
         ).order_by('scheduled_date').first()
 

@@ -100,14 +100,14 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if plan.is_overdue or plan.days_until_due and plan.days_until_due <= 7 %}
+                                    {% if perms.netbox_maintenance_device.add_maintenanceexecution %}{% if plan.is_overdue or plan.days_until_due and plan.days_until_due <= 7 %}
                                         <button class="btn btn-sm btn-success quick-complete" 
                                                 data-plan-id="{{ plan.pk }}" 
                                                 data-device-id="{{ device.pk }}"
                                                 title="{% trans 'Schedule Immediate Maintenance' %}">
                                             <i class="mdi mdi-check-circle"></i> {% trans "Schedule" %}
                                         </button>
-                                    {% endif %}
+                                    {% endif %}{% endif %}
                                     <a href="{{ plan.get_absolute_url }}" class="btn btn-sm btn-outline-primary" title="{% trans 'View Details' %}">
                                         <i class="mdi mdi-eye"></i>
                                     </a>
@@ -177,7 +177,7 @@
                                 </td>
                                 <td>{{ execution.technician|default:"-" }}</td>
                                 <td>
-                                    {% if execution.status != 'completed' and execution.status != 'cancelled' %}
+                                    {% if perms.netbox_maintenance_device.change_maintenanceexecution and execution.status != 'completed' and execution.status != 'cancelled' %}
                                         <button class="btn btn-sm btn-success complete-execution" 
                                                 data-execution-id="{{ execution.pk }}"
                                                 title="{% trans 'Mark as Completed' %}">
