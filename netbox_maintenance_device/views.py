@@ -1,17 +1,21 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_http_methods
 import json
+import logging
 from netbox.views import generic
 from dcim.models import Device
 from virtualization.models import VirtualMachine
 from . import forms, models, tables
+
+logger = logging.getLogger('netbox.plugins.netbox_maintenance_device')
 
 
 class MaintenancePlanListView(generic.ObjectListView):
@@ -152,13 +156,20 @@ class UpcomingMaintenanceView(generic.ObjectListView):
         return context
 
 
+@login_required
 def device_maintenance_tab(request, pk):
     """Tab view for device maintenance history"""
-    device = get_object_or_404(Device, pk=pk)
-    maintenance_plans = models.MaintenancePlan.objects.filter(device=device).order_by('name')
-    recent_executions = models.MaintenanceExecution.objects.filter(
-        maintenance_plan__device=device
-    ).order_by('-scheduled_date')[:10]
+    device = get_object_or_404(Device.objects.restrict(request.user, 'view'), pk=pk)
+    maintenance_plans = (
+        models.MaintenancePlan.objects.restrict(request.user, 'view')
+        .filter(device=device)
+        .order_by('name')
+    )
+    recent_executions = (
+        models.MaintenanceExecution.objects.restrict(request.user, 'view')
+        .filter(maintenance_plan__device=device)
+        .order_by('-scheduled_date')[:10]
+    )
 
     # Count overdue maintenance
     overdue_count = sum(1 for plan in maintenance_plans if plan.is_overdue())
@@ -177,13 +188,20 @@ def device_maintenance_tab(request, pk):
     return render(request, 'netbox_maintenance_device/device_maintenance_tab.html', context)
 
 
+@login_required
 def virtualmachine_maintenance_tab(request, pk):
     """Tab view for virtual machine maintenance history."""
-    vm = get_object_or_404(VirtualMachine, pk=pk)
-    maintenance_plans = models.MaintenancePlan.objects.filter(virtual_machine=vm).order_by('name')
-    recent_executions = models.MaintenanceExecution.objects.filter(
-        maintenance_plan__virtual_machine=vm
-    ).order_by('-scheduled_date')[:10]
+    vm = get_object_or_404(VirtualMachine.objects.restrict(request.user, 'view'), pk=pk)
+    maintenance_plans = (
+        models.MaintenancePlan.objects.restrict(request.user, 'view')
+        .filter(virtual_machine=vm)
+        .order_by('name')
+    )
+    recent_executions = (
+        models.MaintenanceExecution.objects.restrict(request.user, 'view')
+        .filter(maintenance_plan__virtual_machine=vm)
+        .order_by('-scheduled_date')[:10]
+    )
 
     overdue_count = sum(1 for plan in maintenance_plans if plan.is_overdue())
 
@@ -201,6 +219,7 @@ def virtualmachine_maintenance_tab(request, pk):
     return render(request, 'netbox_maintenance_device/device_maintenance_tab.html', context)
 
 
+@login_required
 @require_http_methods(["POST"])
 def quick_complete_maintenance(request):
     """Quick completion of maintenance via AJAX"""
@@ -210,30 +229,40 @@ def quick_complete_maintenance(request):
         device_id = request.POST.get('device_id')
         technician = request.POST.get('technician', '')
         notes = request.POST.get('notes', '')
-        
+
         if execution_id:
             # Complete existing execution
-            execution = get_object_or_404(models.MaintenanceExecution, pk=execution_id)
+            execution = get_object_or_404(
+                models.MaintenanceExecution.objects.restrict(request.user, 'change'),
+                pk=execution_id,
+            )
             execution.status = 'completed'
             execution.completed_date = timezone.now()
             execution.technician = technician
             if notes:
                 execution.notes = notes
             execution.save()
-            
+
             return JsonResponse({
-                'success': True, 
+                'success': True,
                 'message': str(_('Maintenance execution completed successfully'))
             })
-            
+
         elif plan_id and device_id:
             # Create and complete new execution for the plan
-            plan = get_object_or_404(models.MaintenancePlan, pk=plan_id)
-            
+            if not request.user.has_perm('netbox_maintenance_device.add_maintenanceexecution'):
+                return JsonResponse({
+                    'success': False,
+                    'error': str(_('Permission denied'))
+                }, status=403)
+            plan = get_object_or_404(
+                models.MaintenancePlan.objects.restrict(request.user, 'view'), pk=plan_id
+            )
+
             # Use logged user as technician if not provided
-            if not technician and request.user.is_authenticated:
+            if not technician:
                 technician = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
-            
+
             execution = models.MaintenanceExecution.objects.create(
                 maintenance_plan=plan,
                 scheduled_date=timezone.now(),
@@ -242,26 +271,28 @@ def quick_complete_maintenance(request):
                 technician=technician,
                 notes=notes or 'Completed via quick action'
             )
-            
+
             return JsonResponse({
-                'success': True, 
+                'success': True,
                 'message': str(_('Maintenance scheduled and completed successfully'))
             })
         else:
             return JsonResponse({
-                'success': False, 
+                'success': False,
                 'error': str(_('Missing required parameters'))
             }, status=400)
-            
-    except Exception as e:
-        import traceback
+
+    except Http404:
+        raise
+    except Exception:
+        logger.exception('Error completing maintenance execution')
         return JsonResponse({
-            'success': False, 
-            'error': str(e),
-            'traceback': traceback.format_exc()
+            'success': False,
+            'error': str(_('An unexpected error occurred'))
         }, status=500)
 
 
+@login_required
 @require_http_methods(["POST"])
 def schedule_maintenance(request):
     """Schedule maintenance for a plan"""
@@ -270,19 +301,26 @@ def schedule_maintenance(request):
         scheduled_date = request.POST.get('scheduled_date')
         technician = request.POST.get('technician', '')
         notes = request.POST.get('notes', '')
-        
+
         if not plan_id:
             return JsonResponse({
-                'success': False, 
+                'success': False,
                 'error': str(_('Missing maintenance plan ID'))
             }, status=400)
-        
-        plan = get_object_or_404(models.MaintenancePlan, pk=plan_id)
-        
+
+        if not request.user.has_perm('netbox_maintenance_device.add_maintenanceexecution'):
+            return JsonResponse({
+                'success': False,
+                'error': str(_('Permission denied'))
+            }, status=403)
+        plan = get_object_or_404(
+            models.MaintenancePlan.objects.restrict(request.user, 'view'), pk=plan_id
+        )
+
         # Use logged user as technician if not provided
-        if not technician and request.user.is_authenticated:
+        if not technician:
             technician = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
-        
+
         # Use provided date or next maintenance date
         if scheduled_date:
             from datetime import datetime
@@ -305,10 +343,11 @@ def schedule_maintenance(request):
             'execution_id': execution.pk
         })
         
-    except Exception as e:
-        import traceback
+    except Http404:
+        raise
+    except Exception:
+        logger.exception('Error scheduling maintenance')
         return JsonResponse({
-            'success': False, 
-            'error': str(e),
-            'traceback': traceback.format_exc()
+            'success': False,
+            'error': str(_('An unexpected error occurred'))
         }, status=500)

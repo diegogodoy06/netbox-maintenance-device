@@ -14,11 +14,19 @@ class _MaintenanceExtensionMixin:
         if target is None:
             return {}
 
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if user is None:
+            return {}
+
         plan_filter = {self.target_kwarg: target}
         execution_filter = {f'maintenance_plan__{self.target_kwarg}': target}
 
-        maintenance_plans = list(models.MaintenancePlan.objects.filter(**plan_filter))
-        recent_executions = models.MaintenanceExecution.objects.filter(
+        plan_qs = models.MaintenancePlan.objects.restrict(user, 'view')
+        execution_qs = models.MaintenanceExecution.objects.restrict(user, 'view')
+
+        maintenance_plans = list(plan_qs.filter(**plan_filter))
+        recent_executions = execution_qs.filter(
             **execution_filter
         ).order_by('-scheduled_date')[:5]
 
@@ -28,7 +36,7 @@ class _MaintenanceExtensionMixin:
 
         plans_with_execution = []
         for plan in maintenance_plans:
-            pending_execution = models.MaintenanceExecution.objects.filter(
+            pending_execution = execution_qs.filter(
                 maintenance_plan=plan,
                 status__in=['scheduled', 'in_progress']
             ).order_by('scheduled_date').first()
