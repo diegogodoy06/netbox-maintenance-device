@@ -373,8 +373,8 @@ For issues, feature requests, or questions:
 
 ---
 
-**Last Updated**: October 2026
+**Last Updated**: November 2026
 
-**Plugin Version**: 1.4.5
+**Plugin Version**: 1.4.6
 
 **NetBox Compatibility**: 4.4.x, 4.5.x, 4.6.x, 4.7.x
