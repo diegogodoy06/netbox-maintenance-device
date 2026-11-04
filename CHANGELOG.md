@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- The quick-complete and schedule endpoints and the device and VM maintenance tabs required no authentication or permissions, so unauthenticated requests could read maintenance data and create or complete executions. They now require login and enforce object permissions (#29). Thanks to Veit Heller for the report and fix.
+- Error responses from those endpoints no longer include exception details or a traceback (#29).
+- Both endpoints evaluate the constraints of `add` and `change` object permissions against the saved execution and roll back on a mismatch, as NetBox's generic edit view does.
+- The plan details page, the upcoming maintenance counters and the upcoming table's actions now honor view and change object permissions on plans and executions.
+
+- API tokens without write access could create, change and delete plans and executions, because the plugin's permission class replaced NetBox's `TokenPermissions`. The standard routes now use `TokenPermissions`, and the custom actions enforce token write access.
+- The `complete` and `cancel` API actions checked constraints of the `add` permission instead of `change`, and `schedule-maintenance` ignored the constraints of `add` on executions. All three now enforce the right permission against the saved execution.
+- The plan API returns only the executions the user may view in `executions`, `execution_count` and `last_execution_date`.
+
+### Fixed
+
+- `schedule-maintenance` no longer requires `add` on plans, and `complete` and `cancel` no longer require `add` on executions.
+- The `complete` and `cancel` API actions record pre-change data in the changelog.
+- The quick-complete and schedule endpoints always answer with JSON: 401 without a session, 404 for missing or inaccessible objects, and 400 for invalid IDs or dates, so the UI shows the actual error.
+- Schedule and Complete buttons are shown only to users holding the matching permission.
+- Completing an execution with a blank technician keeps the assigned technician, falling back to the logged-in user, instead of clearing it.
+- The quick-complete endpoint rejects executions that are already completed or cancelled, and records pre-change data in the changelog.
+
 ## [1.4.5] - 2026-10-15
 
 ### Added

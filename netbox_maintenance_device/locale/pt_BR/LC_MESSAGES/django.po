@@ -236,3 +236,27 @@ msgid ""
 msgstr ""
 "Data de instalação ou início do ciclo de manutenção, usada até a primeira manutenção concluída. "
 "Deixe em branco para usar a data de criação do plano."
+
+msgid "Authentication required"
+msgstr "Autenticação necessária"
+
+msgid "Not found, or you do not have permission to access it"
+msgstr "Não encontrado, ou você não tem permissão para acessá-lo"
+
+msgid "Permission denied"
+msgstr "Permissão negada"
+
+msgid "An unexpected error occurred"
+msgstr "Ocorreu um erro inesperado"
+
+msgid "Invalid maintenance plan ID"
+msgstr "ID do plano de manutenção inválido"
+
+msgid "Invalid maintenance execution ID"
+msgstr "ID da execução de manutenção inválido"
+
+msgid "This maintenance execution is already completed or cancelled"
+msgstr "Esta execução de manutenção já foi concluída ou cancelada"
+
+msgid "Invalid scheduled date"
+msgstr "Data agendada inválida"

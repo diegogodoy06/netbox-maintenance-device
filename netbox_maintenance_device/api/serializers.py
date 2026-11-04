@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer, WritableNestedSerializer
 from netbox_maintenance_device import models
@@ -55,7 +56,7 @@ class MaintenancePlanSerializer(NetBoxModelSerializer):
     # Nested relationships
     device = DeviceNestedSerializer(required=False, allow_null=True)
     virtual_machine = VirtualMachineNestedSerializer(required=False, allow_null=True)
-    executions = NestedMaintenanceExecutionSerializer(many=True, read_only=True)
+    executions = serializers.SerializerMethodField()
 
     # Computed fields
     execution_count = serializers.IntegerField(read_only=True)
@@ -78,6 +79,22 @@ class MaintenancePlanSerializer(NetBoxModelSerializer):
             'next_maintenance_date', 'is_overdue', 'days_until_due',
             'last_execution_date', 'target_type',
         ]
+
+    def _visible_executions(self, plan):
+        """Return the plan's executions the requesting user may view.
+
+        Serialization outside a request (events, background jobs) has no user to restrict for.
+        """
+        user = getattr(self.context.get('request'), 'user', None)
+        return plan.executions.all() if user is None else plan.executions.restrict(user, 'view')
+
+    @extend_schema_field(NestedMaintenanceExecutionSerializer(many=True))
+    def get_executions(self, plan):
+        return NestedMaintenanceExecutionSerializer(
+            self._visible_executions(plan).order_by('-scheduled_date'),
+            many=True,
+            context=self.context,
+        ).data
 
     def validate_frequency_days(self, value):
         """Validate frequency count is positive."""
@@ -123,14 +140,15 @@ class MaintenancePlanSerializer(NetBoxModelSerializer):
         data = super().to_representation(instance)
 
         # Add computed fields
-        data['execution_count'] = instance.executions.count()
+        visible_executions = self._visible_executions(instance)
+        data['execution_count'] = visible_executions.count()
         data['next_maintenance_date'] = instance.get_next_maintenance_date()
         data['is_overdue'] = instance.is_overdue()
         data['days_until_due'] = instance.days_until_due()
         data['target_type'] = instance.target_type
 
         # Add last execution date
-        last_execution = instance.executions.filter(
+        last_execution = visible_executions.filter(
             completed=True, completed_date__isnull=False
         ).order_by('-completed_date').first()
         data['last_execution_date'] = last_execution.completed_date if last_execution else None

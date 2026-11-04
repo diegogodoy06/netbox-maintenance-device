@@ -1,25 +1,24 @@
-from django.db.models import Count, Q, Prefetch
+from django.db.models import Count, Q
 from django.utils import timezone
 from django_filters import rest_framework as filters
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from netbox.api.viewsets import NetBoxModelViewSet
+from utilities.exceptions import PermissionsViolation
 
 from netbox_maintenance_device import models
+from netbox_maintenance_device.permissions import save_restricted, write_restricted
 from .serializers import (
     MaintenancePlanSerializer, 
     MaintenanceExecutionSerializer,
     NestedMaintenancePlanSerializer,
     NestedMaintenanceExecutionSerializer
 )
-from .permissions import (
-    MaintenanceDevicePermissions,
-    CanScheduleMaintenance,
-    CanCompleteMaintenance
-)
+from .permissions import CanScheduleMaintenance, CanCompleteMaintenance
 
 
 class MaintenancePlanFilter(filters.FilterSet):
@@ -241,13 +240,9 @@ class MaintenancePlanViewSet(NetBoxModelViewSet):
     
     queryset = models.MaintenancePlan.objects.select_related(
         'device', 'virtual_machine'
-    ).prefetch_related(
-        'tags',
-        Prefetch('executions', queryset=models.MaintenanceExecution.objects.order_by('-scheduled_date'))
-    )
+    ).prefetch_related('tags')
     serializer_class = MaintenancePlanSerializer
     filterset_class = MaintenancePlanFilter
-    permission_classes = [MaintenanceDevicePermissions]
     
     # Ordering options
     ordering_fields = [
@@ -262,6 +257,13 @@ class MaintenancePlanViewSet(NetBoxModelViewSet):
         'virtual_machine__name',
     ]
     
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        # NetBox restricts by HTTP method, which means 'add' on plans for any POST. Scheduling
+        # adds an execution to a plan the user can see, and doesn't add a plan.
+        if self.action == 'schedule_maintenance':
+            self.queryset = type(self).queryset.restrict(request.user, 'view')
+
     def get_queryset(self):
         """Optimize queryset with annotations for computed fields"""
         queryset = super().get_queryset()
@@ -302,7 +304,12 @@ class MaintenancePlanViewSet(NetBoxModelViewSet):
             context=self.get_serializer_context(),
         )
         execution_serializer.is_valid(raise_exception=True)
-        execution = execution_serializer.save()
+        try:
+            execution = write_restricted(
+                models.MaintenanceExecution, execution_serializer.save, request.user, 'add'
+            )
+        except PermissionsViolation:
+            raise PermissionDenied()
         
         serializer = NestedMaintenanceExecutionSerializer(execution, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -379,7 +386,6 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
     ).prefetch_related('tags')
     serializer_class = MaintenanceExecutionSerializer
     filterset_class = MaintenanceExecutionFilter
-    permission_classes = [MaintenanceDevicePermissions]
     
     # Ordering options
     ordering_fields = [
@@ -398,6 +404,19 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
         'notes', 'technician',
     ]
     
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        # NetBox restricts by HTTP method, which means 'add' for any POST, but these actions
+        # modify an existing execution.
+        if self.action in ('complete', 'cancel'):
+            self.queryset = type(self).queryset.restrict(request.user, 'change')
+
+    def _save_change(self, execution):
+        try:
+            save_restricted(execution, self.request.user, 'change')
+        except PermissionsViolation:
+            raise PermissionDenied()
+
     @action(detail=True, methods=['post'], permission_classes=[CanCompleteMaintenance])
     def complete(self, request, pk=None):
         """Custom action to mark execution as completed"""
@@ -410,6 +429,7 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
             )
         
         # Update execution
+        execution.snapshot()
         execution.status = 'completed'
         execution.completed_date = timezone.now()
         execution.completed = True
@@ -423,7 +443,7 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
         if technician:
             execution.technician = technician
         
-        execution.save()
+        self._save_change(execution)
         
         serializer = self.get_serializer(execution)
         return Response(serializer.data)
@@ -439,6 +459,7 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        execution.snapshot()
         execution.status = 'cancelled'
         
         # Get cancellation reason from request
@@ -446,7 +467,7 @@ class MaintenanceExecutionViewSet(NetBoxModelViewSet):
         if notes:
             execution.notes = notes
         
-        execution.save()
+        self._save_change(execution)
         
         serializer = self.get_serializer(execution)
         return Response(serializer.data)
